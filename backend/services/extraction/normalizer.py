@@ -84,6 +84,12 @@ def infer_international_eligibility(extracted: dict) -> str:
     if work_auth and paid == "paid":
         return "unclear"
 
+    # A funding restriction without a clear citizenship block is ambiguous —
+    # many federal/NSF grants exclude international students implicitly.
+    funding = extracted.get("funding_restriction")
+    if funding:
+        return "unclear"
+
     if intl == "likely_eligible":
         return "likely_eligible"
 
