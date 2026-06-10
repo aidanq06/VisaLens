@@ -4,7 +4,7 @@ Don't lose the opportunity after finding it.
 
 ---
 
-International students spend hours decoding opportunity listings — trying to figure out if "must be eligible to work in the U.S." means they can't apply, or if a paid fellowship requires work authorization, or if the deadline is even realistic given how long verification takes.
+International students spend hours decoding opportunity listings, trying to figure out if "must be eligible to work in the U.S." means they can't apply, or if a paid fellowship requires work authorization, or if the deadline is even realistic given how long verification takes.
 
 VisaLens turns that confusion into a structured risk report. Paste an opportunity, get back extracted requirements, a risk score, a blocker graph, timeline urgency, and the exact questions to ask before you apply.
 
@@ -24,8 +24,8 @@ VisaLens is not a chatbot. It does not give legal or immigration advice. It show
 
 ---
 
-![VisaLens screenshot](screenshot.png)
+<img width="886" height="738" alt="Screenshot 2026-06-10 at 11 24 33 AM" src="https://github.com/user-attachments/assets/3dc37c18-7cf7-40cd-a31c-0c24f396cdcc" />
+
 
 ---
 
-Built for a hackathon. AI for social good.
