@@ -10,7 +10,9 @@ npm install
 npm run dev   # http://localhost:3000
 ```
 
-The home page renders the full results dashboard from `data/mockAnalysis.ts` — no backend needed.
+The home page is a live scanner: pick your status, paste a listing (or load a sample), and hit Analyze. The full pipeline — extraction → risk scoring → blocker graph → timeline → verification kit — runs **entirely client-side** (`lib/analyze/analyzeOpportunity.ts`), so the demo needs no backend, API keys, or network. `/results` shows the dashboard plus a "Listing X-ray" with detected phrases highlighted in the original text.
+
+Visiting `/results` directly falls back to `data/mockAnalysis.ts` demo data.
 
 ## Team contract
 
@@ -27,6 +29,15 @@ The home page renders the full results dashboard from `data/mockAnalysis.ts` —
 | `components/verification/*`, `components/report/*`, `lib/verification/*`, `lib/report/*` | Rahul (done — integrated in dashboard) |
 
 Remaining placeholders live in `ResultsDashboard.tsx` and already read from the shared schema — replacing one is a single import swap. The verification kit and report are fully integrated; their content falls back to risk-category-derived generation (`lib/verification/generateVerificationKit.ts`) when `analysis.verification` is missing.
+
+## Analysis pipeline (client-side)
+
+- `lib/analyze/phraseRules.ts` — deterministic extraction with sentence-level evidence + confidence (mirrors `backend/services/extraction/phrase_rules.py`)
+- `lib/analyze/riskScoring.ts` — the team's agreed scoring rules (+90 citizens-only, +45 work-auth, +25 paid, −35 worldwide, etc.) with category breakdown and student-context adjustment
+- `lib/analyze/analyzeOpportunity.ts` — orchestrates extract → score → graph → timeline → verification into one `VisaLensAnalysis`
+- `data/sampleOpportunities.ts` — three one-click demo scenarios (risky internship, citizens-only NSF program, open-worldwide hackathon)
+
+When the backend LLM extraction is ready, swap `extractOpportunity` for the API call in `analyzeOpportunity` — everything downstream consumes the same schema. The client rules remain the offline fallback.
 
 ## Backend integration
 
