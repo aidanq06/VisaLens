@@ -83,6 +83,7 @@ export default function ScanPage() {
   const [text, setText] = useState("");
   const [deadline, setDeadline] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const canSubmit = text.trim().length > 30;
 
@@ -97,8 +98,33 @@ export default function ScanPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    router.push("/results?demo=true");
+    setError("");
+    try {
+      const res = await fetch("http://localhost:8000/api/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          text,
+          student_context: status,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
+      const data = await res.json();
+      localStorage.setItem("visalens_extraction_result", JSON.stringify(data));
+      router.push("/results");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while analyzing this opportunity."
+      );
+      setLoading(false);
+    }
   }
 
   return (
@@ -408,6 +434,20 @@ export default function ScanPage() {
                 Extracting requirements · Scoring risk · Building blocker graph…
               </p>
             </div>
+          )}
+
+          {error && (
+            <p
+              style={{
+                marginTop: "16px",
+                fontSize: "12px",
+                color: "#ff5c5c",
+                fontFamily: "var(--font-mono)",
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </p>
           )}
         </form>
       </div>
