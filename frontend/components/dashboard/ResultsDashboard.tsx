@@ -1,11 +1,13 @@
 "use client";
 
-import { Gauge, FileSearch, ClipboardCheck, ShieldAlert } from "lucide-react";
+import { Gauge, FileSearch } from "lucide-react";
 
 import type { PartialVisaLensAnalysis } from "@/types/analysis";
 import BlockerGraph from "@/components/workflow/BlockerGraph";
 import TimelineSimulator from "@/components/workflow/TimelineSimulator";
 import CriticalPathCard from "@/components/workflow/CriticalPathCard";
+import VerificationKit from "@/components/verification/VerificationKit";
+import ReportPreview from "@/components/report/ReportPreview";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import {
   RISK_LEVEL_ACCENT,
@@ -20,7 +22,7 @@ import {
  * TEAM INTEGRATION POINTS — replace the placeholder components below:
  *  - <RiskScorePlaceholder/>      -> Aidan's RiskScoreCard / RiskBreakdownTable
  *  - <ExtractedFieldsPlaceholder/> -> Pranav's ExtractedFieldsPanel
- *  - <VerificationPlaceholder/>   -> Rahul's VerificationKit
+ * Verification + report are integrated (components/verification, components/report).
  * Each placeholder already reads from the shared schema, so swapping is
  * a one-line import change.
  */
@@ -123,64 +125,6 @@ function ExtractedFieldsPlaceholder({ analysis }: { analysis: PartialVisaLensAna
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder: verification kit (Rahul replaces with VerificationKit)
-// ---------------------------------------------------------------------------
-function VerificationPlaceholder({ analysis }: { analysis: PartialVisaLensAnalysis }) {
-  const v = analysis.verification;
-  return (
-    <Card>
-      <CardHeader
-        icon={<ClipboardCheck size={16} />}
-        title="Verification kit"
-        subtitle="Exactly what to ask before you apply"
-      />
-      <CardBody className="space-y-4">
-        {!v ? (
-          <p className="text-sm text-slate-500">Verification kit pending…</p>
-        ) : (
-          <>
-            {v.organizer_questions && v.organizer_questions.length > 0 && (
-              <div>
-                <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Ask the organizer
-                </h4>
-                <ul className="space-y-1">
-                  {v.organizer_questions.map((q) => (
-                    <li key={q} className="text-sm text-slate-700">• {q}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {v.email_draft && (
-              <div>
-                <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Email draft
-                </h4>
-                <p className="rounded-lg bg-slate-50 px-3.5 py-3 text-sm leading-relaxed text-slate-700">
-                  {v.email_draft}
-                </p>
-              </div>
-            )}
-            {v.next_steps && v.next_steps.length > 0 && (
-              <div>
-                <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Next steps
-                </h4>
-                <ol className="list-decimal space-y-1 pl-5">
-                  {v.next_steps.map((s) => (
-                    <li key={s} className="text-sm text-slate-700">{s}</li>
-                  ))}
-                </ol>
-              </div>
-            )}
-          </>
-        )}
-      </CardBody>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Dashboard
 // ---------------------------------------------------------------------------
 export default function ResultsDashboard({
@@ -188,10 +132,6 @@ export default function ResultsDashboard({
 }: {
   analysis: PartialVisaLensAnalysis;
 }) {
-  const disclaimer =
-    analysis.verification?.disclaimer ??
-    "VisaLens does not provide legal, immigration, financial, or official eligibility advice. Verify with official sources, advisors, or opportunity organizers.";
-
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-4 py-8">
       {/* Header */}
@@ -224,14 +164,11 @@ export default function ResultsDashboard({
         <CriticalPathCard analysis={analysis} />
       </div>
 
-      {/* Row 4: verification kit */}
-      <VerificationPlaceholder analysis={analysis} />
+      {/* Row 4: verification workflow (includes responsible-AI disclaimer) */}
+      <VerificationKit analysis={analysis} />
 
-      {/* Responsible-AI disclaimer */}
-      <div className="flex items-start gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-        <ShieldAlert size={16} className="mt-0.5 shrink-0 text-slate-400" />
-        <p className="text-xs leading-relaxed text-slate-500">{disclaimer}</p>
-      </div>
+      {/* Row 5: shareable report */}
+      <ReportPreview analysis={analysis} />
     </div>
   );
 }

@@ -24,9 +24,9 @@ The home page renders the full results dashboard from `data/mockAnalysis.ts` —
 | `components/workflow/*`, `lib/graphBuilder.ts`, `lib/timelineSimulator.ts`, `components/dashboard/ResultsDashboard.tsx` | Anson |
 | `components/extraction/*` (replace `ExtractedFieldsPlaceholder`) | Pranav |
 | `components/risk/*` (replace `RiskScorePlaceholder`) | Aidan |
-| `components/verification/*` (replace `VerificationPlaceholder`) | Rahul |
+| `components/verification/*`, `components/report/*`, `lib/verification/*`, `lib/report/*` | Rahul (done — integrated in dashboard) |
 
-Placeholders live in `ResultsDashboard.tsx` and already read from the shared schema — replacing one is a single import swap.
+Remaining placeholders live in `ResultsDashboard.tsx` and already read from the shared schema — replacing one is a single import swap. The verification kit and report are fully integrated; their content falls back to risk-category-derived generation (`lib/verification/generateVerificationKit.ts`) when `analysis.verification` is missing.
 
 ## Backend integration
 
