@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import type { VisaLensAnalysis } from "@/types/analysis";
 import { mockAnalysis } from "@/data/mockAnalysis";
 import { loadStoredAnalysis } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import RiskScoreCard from "@/components/dashboard/RiskScoreCard";
 import ExtractedFieldsCard from "@/components/dashboard/ExtractedFieldsCard";
 import BlockerGraph from "@/components/graph/BlockerGraph";
@@ -35,19 +36,52 @@ export default function ResultsContent() {
   const searchParams = useSearchParams();
   const demoRequested = searchParams.get("demo") === "true";
 
+  const scanId = searchParams.get("scan");
+
   const [analysis, setAnalysis] = useState<VisaLensAnalysis | null>(null);
   const [isDemo, setIsDemo] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = demoRequested ? null : loadStoredAnalysis();
-    if (stored) {
-      setAnalysis(stored);
-      setIsDemo(false);
-    } else {
-      setAnalysis(mockAnalysis);
-      setIsDemo(true);
+    let cancelled = false;
+
+    function loadLocal(scanFetchFailed: boolean) {
+      const stored = demoRequested ? null : loadStoredAnalysis();
+      if (stored) {
+        setAnalysis(stored);
+        setIsDemo(false);
+      } else {
+        if (scanFetchFailed) setLoadError("Could not load saved scan");
+        setAnalysis(mockAnalysis);
+        setIsDemo(true);
+      }
     }
-  }, [demoRequested]);
+
+    if (!scanId) {
+      loadLocal(false);
+      return;
+    }
+
+    // Saved scan requested: fetch from Supabase, fall back to local data.
+    (async () => {
+      const { data, error } = await supabase
+        .from("saved_scans")
+        .select("*")
+        .eq("id", scanId)
+        .single();
+      if (cancelled) return;
+      if (!error && data?.analysis_json) {
+        setAnalysis(data.analysis_json as VisaLensAnalysis);
+        setIsDemo(false);
+      } else {
+        loadLocal(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [demoRequested, scanId]);
 
   if (!analysis) {
     return (
@@ -95,6 +129,21 @@ export default function ResultsContent() {
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {loadError && (
+            <span
+              style={{
+                fontSize: "10px",
+                padding: "3px 10px",
+                borderRadius: "999px",
+                color: "#ef9a9a",
+                background: "rgba(239,67,67,0.06)",
+                border: "1px solid rgba(239,67,67,0.25)",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
+              {loadError}
+            </span>
+          )}
           {isDemo && (
             <span
               style={{
