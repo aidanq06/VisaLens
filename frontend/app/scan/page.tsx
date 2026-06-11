@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { StudentContext } from "@/types/analysis";
 import { sampleOpportunities } from "@/data/mockAnalysis";
 import { analyzeOpportunity, storeAnalysis } from "@/lib/api";
+import ProfileMenu from "@/components/ui/ProfileMenu";
 
 const STATUS_OPTIONS: { value: StudentContext["status"]; label: string }[] = [
   { value: "F-1", label: "F-1 Student Visa" },
@@ -153,15 +154,18 @@ export default function ScanPage() {
             VisaLens
           </span>
         </Link>
-        <span
-          style={{
-            fontSize: "12px",
-            color: "#484d66",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          Analyze Opportunity
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <span
+            style={{
+              fontSize: "12px",
+              color: "#484d66",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            Analyze Opportunity
+          </span>
+          <ProfileMenu />
+        </div>
       </nav>
 
       <div

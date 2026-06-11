@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { sampleOpportunities } from "@/data/mockAnalysis";
+import ProfileMenu from "@/components/ui/ProfileMenu";
 
 export default function Home() {
   return (
@@ -38,6 +39,7 @@ export default function Home() {
           <Link href="/scan" style={{ fontSize: "12px", padding: "8px 16px", borderRadius: "10px", background: "#f5a623", color: "#080910", fontWeight: "600", textDecoration: "none" }}>
             Analyze →
           </Link>
+          <ProfileMenu />
         </div>
       </nav>
 
