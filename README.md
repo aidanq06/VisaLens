@@ -2,6 +2,8 @@
 
 Don't lose the opportunity after finding it.
 
+> **Demoing this project?** Follow the 3-minute script in [DEMO.md](DEMO.md) — it covers the full workflow: radar discovery → eligibility risk → verification kit.
+
 ---
 
 International students spend hours decoding opportunity listings, trying to figure out if "must be eligible to work in the U.S." means they can't apply, or if a paid fellowship requires work authorization, or if the deadline is even realistic given how long verification takes.

@@ -56,15 +56,19 @@ export default function Home() {
           after finding it.
         </h1>
 
-        <p style={{ fontSize: "18px", lineHeight: "1.7", maxWidth: "560px", margin: "0 auto 40px", color: "#7a7f99" }}>
-          Paste any internship, fellowship, scholarship, or research description.
-          VisaLens extracts hidden eligibility requirements, scores your risk as an
-          international student, and tells you exactly what to verify before applying.
+        <p style={{ fontSize: "18px", lineHeight: "1.7", maxWidth: "620px", margin: "0 auto 40px", color: "#7a7f99" }}>
+          One workflow for international students: the Radar discovers fresh
+          internships straight from company career feeds, VisaLens scores your
+          eligibility risk on each one, and the verification kit tells you exactly
+          what to confirm before applying.
         </p>
 
         <div style={{ display: "flex", flexDirection: "row", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/scan" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "14px 28px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", background: "#f5a623", color: "#080910", textDecoration: "none" }}>
-            Analyze an Opportunity <span>→</span>
+          <Link href="/radar" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "14px 28px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", background: "#f5a623", color: "#080910", textDecoration: "none" }}>
+            Find Internships <span>→</span>
+          </Link>
+          <Link href="/scan" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "14px 28px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", color: "#f5a623", background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.3)", textDecoration: "none" }}>
+            Analyze an Opportunity
           </Link>
           <Link href="/results?demo=true" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "14px 28px", borderRadius: "12px", fontSize: "15px", color: "#7a7f99", background: "#0f1018", border: "1px solid #252838", textDecoration: "none" }}>
             See demo results
@@ -74,11 +78,12 @@ export default function Home() {
 
       {/* How it works */}
       <section style={{ position: "relative", zIndex: 10, padding: "0 24px 80px", maxWidth: "1024px", margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1px", borderRadius: "16px", overflow: "hidden", background: "#252838" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", borderRadius: "16px", overflow: "hidden", background: "#252838" }}>
           {[
-            { step: "01", title: "Paste opportunity", desc: "Copy any internship, scholarship, or program description and paste it into VisaLens.", icon: "⌥" },
-            { step: "02", title: "AI extracts requirements", desc: 'Phrases like "eligible to work in the U.S." or "U.S. citizens only" are detected and classified.', icon: "◎" },
-            { step: "03", title: "Get your risk report", desc: "Risk score, blocker graph, deadline urgency, and a verification kit — ready in seconds.", icon: "◈" },
+            { step: "01", title: "Radar finds roles early", desc: "Company career feeds are monitored directly, so internships surface here before public job boards — each scored for fit and urgency.", icon: "◉" },
+            { step: "02", title: "AI extracts requirements", desc: 'Phrases like "eligible to work in the U.S." or "U.S. citizens only" are detected and classified — automatically for every role.', icon: "◎" },
+            { step: "03", title: "Get your risk report", desc: "Risk score, blocker graph, deadline urgency — one click from any radar role, or paste any listing manually.", icon: "◈" },
+            { step: "04", title: "Verify, then apply", desc: "Questions for the organizer and your DSO, a ready-to-send email draft, and a downloadable report.", icon: "✓" },
           ].map(({ step, title, desc, icon }) => (
             <div key={step} style={{ padding: "32px 28px", background: "#0f1018" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
