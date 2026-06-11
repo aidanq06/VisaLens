@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { StudentContext } from "@/types/analysis";
 import { sampleOpportunities } from "@/data/mockAnalysis";
 import { analyzeOpportunity, storeAnalysis } from "@/lib/api";
+import { getUser, saveScan } from "@/lib/auth";
 import ProfileMenu from "@/components/ui/ProfileMenu";
 
 const STATUS_OPTIONS: { value: StudentContext["status"]; label: string }[] = [
@@ -113,7 +114,28 @@ export default function ScanPage() {
         deadlineOverride: deadline || undefined,
       });
       storeAnalysis(analysis);
-      router.push("/results");
+
+      // Auto-save to Supabase for logged-in users; never block the redirect.
+      let scanId: string | null = null;
+      try {
+        const user = await getUser();
+        if (user) {
+          const { id, error: saveError } = await saveScan(
+            user.id,
+            title.trim() || "Untitled Opportunity",
+            oppType,
+            analysis
+          );
+          if (saveError) {
+            console.error("Failed to save scan:", saveError);
+          }
+          scanId = id;
+        }
+      } catch (saveError) {
+        console.error("Failed to save scan:", saveError);
+      }
+
+      router.push(scanId ? `/results?scan=${scanId}` : "/results");
     } catch {
       setLoading(false);
       setError(
