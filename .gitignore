@@ -1,3 +1,10 @@
 __pycache__/
 *.pyc
 *.db
+
+# Local secrets
+.env
+backend/.env
+
+# macOS
+.DS_Store
