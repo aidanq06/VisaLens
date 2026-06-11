@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import type { VisaLensAnalysis } from "@/types/analysis";
 import { mockAnalysis } from "@/data/mockAnalysis";
 import { loadStoredAnalysis } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import RiskScoreCard from "@/components/dashboard/RiskScoreCard";
 import ExtractedFieldsCard from "@/components/dashboard/ExtractedFieldsCard";
@@ -41,19 +42,30 @@ export default function ResultsContent() {
   const [analysis, setAnalysis] = useState<VisaLensAnalysis | null>(null);
   const [isDemo, setIsDemo] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [checklist, setChecklist] = useState<boolean[]>([]);
 
   useEffect(() => {
     let cancelled = false;
+
+    function initChecklist(a: VisaLensAnalysis, saved?: unknown) {
+      const steps = a.timeline?.critical_path?.length ?? 0;
+      const savedList = Array.isArray(saved) ? saved : [];
+      setChecklist(
+        Array.from({ length: steps }, (_, i) => savedList[i] === true)
+      );
+    }
 
     function loadLocal(scanFetchFailed: boolean) {
       const stored = demoRequested ? null : loadStoredAnalysis();
       if (stored) {
         setAnalysis(stored);
         setIsDemo(false);
+        initChecklist(stored);
       } else {
         if (scanFetchFailed) setLoadError("Could not load saved scan");
         setAnalysis(mockAnalysis);
         setIsDemo(true);
+        initChecklist(mockAnalysis);
       }
     }
 
@@ -71,8 +83,10 @@ export default function ResultsContent() {
         .single();
       if (cancelled) return;
       if (!error && data?.analysis_json) {
-        setAnalysis(data.analysis_json as VisaLensAnalysis);
+        const saved = data.analysis_json as VisaLensAnalysis;
+        setAnalysis(saved);
         setIsDemo(false);
+        initChecklist(saved, data.checklist_progress);
       } else {
         loadLocal(true);
       }
@@ -82,6 +96,19 @@ export default function ResultsContent() {
       cancelled = true;
     };
   }, [demoRequested, scanId]);
+
+  async function toggleStep(index: number) {
+    const next = checklist.map((v, i) => (i === index ? !v : v));
+    setChecklist(next);
+    if (!scanId) return;
+    const user = await getUser();
+    if (!user) return;
+    const { error } = await supabase
+      .from("saved_scans")
+      .update({ checklist_progress: next })
+      .eq("id", scanId);
+    if (error) console.error("Failed to save checklist progress:", error);
+  }
 
   if (!analysis) {
     return (
@@ -358,7 +385,11 @@ export default function ResultsContent() {
 
         {/* Timeline */}
         <div>
-          <TimelineRiskCard timeline={analysis.timeline} />
+          <TimelineRiskCard
+            timeline={analysis.timeline}
+            checklistProgress={isDemo ? undefined : checklist}
+            onToggleStep={isDemo ? undefined : toggleStep}
+          />
         </div>
 
         {/* Verification kit — full width */}

@@ -14,7 +14,7 @@ export type SavedScan = {
   title: string;
   opportunity_type: string;
   analysis_json: Record<string, unknown>;
-  checklist_progress: Record<string, boolean> | null;
+  checklist_progress: boolean[] | null;
   created_at: string;
 };
 

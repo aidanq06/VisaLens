@@ -3,9 +3,18 @@
 import type { VisaLensAnalysis } from "@/types/analysis";
 import { riskColor, riskLabel } from "@/lib/utils";
 
-type Props = { timeline: VisaLensAnalysis["timeline"] };
+type Props = {
+  timeline: VisaLensAnalysis["timeline"];
+  /** When provided together with onToggleStep, critical path steps become checkable. */
+  checklistProgress?: boolean[];
+  onToggleStep?: (index: number) => void;
+};
 
-export default function TimelineRiskCard({ timeline }: Props) {
+export default function TimelineRiskCard({
+  timeline,
+  checklistProgress,
+  onToggleStep,
+}: Props) {
   const color = riskColor(timeline.risk_level);
   const days = timeline.days_until_deadline;
   const verifyDays = timeline.estimated_verification_days;
@@ -222,17 +231,66 @@ export default function TimelineRiskCard({ timeline }: Props) {
             Critical Path
           </p>
           <ol className="space-y-2">
-            {timeline.critical_path.map((step, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#7a7f99" }}>
-                <span
-                  className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-medium"
-                  style={{ background: "#1e2130", color: "#7a7f99" }}
-                >
-                  {i + 1}
-                </span>
-                {step}
-              </li>
-            ))}
+            {timeline.critical_path.map((step, i) => {
+              if (!checklistProgress || !onToggleStep) {
+                return (
+                  <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#7a7f99" }}>
+                    <span
+                      className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-medium"
+                      style={{ background: "#1e2130", color: "#7a7f99" }}
+                    >
+                      {i + 1}
+                    </span>
+                    {step}
+                  </li>
+                );
+              }
+              const done = checklistProgress[i] === true;
+              return (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onClick={() => onToggleStep(i)}
+                    className="flex items-start gap-3 text-sm w-full text-left cursor-pointer"
+                    style={{
+                      color: done ? "#484d66" : "#7a7f99",
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                    }}
+                  >
+                    <span
+                      className="flex-shrink-0 flex items-center justify-center"
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        marginTop: "2px",
+                        borderRadius: "4px",
+                        border: `1px solid ${done ? "#f5a623" : "#252838"}`,
+                        background: done ? "#f5a623" : "transparent",
+                      }}
+                    >
+                      {done && (
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path
+                            d="M2 5 L4.2 7.2 L8 3"
+                            stroke="#ffffff"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                    <span
+                      style={{ textDecoration: done ? "line-through" : "none" }}
+                    >
+                      {step}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ol>
         </div>
       )}
