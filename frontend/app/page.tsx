@@ -32,6 +32,9 @@ export default function Home() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <span style={{ fontSize: "12px", color: "#7a7f99", fontFamily: "var(--font-mono)" }}>Risk Engine for International Students</span>
+          <Link href="/radar" style={{ fontSize: "12px", color: "#7a7f99", textDecoration: "none", fontFamily: "var(--font-mono)" }}>
+            Radar
+          </Link>
           <Link href="/scan" style={{ fontSize: "12px", padding: "8px 16px", borderRadius: "10px", background: "#f5a623", color: "#080910", fontWeight: "600", textDecoration: "none" }}>
             Analyze →
           </Link>

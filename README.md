@@ -29,3 +29,48 @@ VisaLens is not a chatbot. It does not give legal or immigration advice. It show
 
 ---
 
+
+## InternRadar — early discovery + eligibility in one workflow
+
+VisaLens now finds the opportunities too. InternRadar monitors company
+source-of-truth career feeds directly (official Greenhouse / Lever / Ashby
+job-board APIs plus public GitHub internship lists), so roles surface here
+before they spread to public job boards — and every discovered role gets an
+automatic VisaLens eligibility analysis.
+
+The full workflow: **discover early → score fit & urgency → check visa risk →
+verify → apply.**
+
+- **Self-healing source graph** — candidate sources are auto-discovered from
+  ATS links in public lists, verified against the live API, promoted to
+  monitored sources, and retired with exponential backoff when they break
+- **Deterministic scoring** — freshness (1h/6h/24h bands), personal fit
+  (SWE/AI/ML/backend/systems/embedded + stack keywords), and urgency; no
+  per-job LLM calls, every point auditable
+- **Dedupe across sources** + tracking of whether the radar found a posting
+  before the public lists did
+- **Discord alerts** — red at urgency ≥ 85, yellow at ≥ 70 (set
+  `DISCORD_WEBHOOK_URL`)
+- **Dashboard** at `/radar`: Apply Now, Found Today, Source-of-Truth Only,
+  and Source Health views; one click opens the full VisaLens eligibility
+  report for any role
+
+No LinkedIn/Indeed/Handshake scraping, no login-gated scraping, no CAPTCHA
+bypassing — only public, unauthenticated, structured endpoints.
+
+### Radar quickstart
+
+```bash
+cd backend
+pip3 install -r requirements.txt
+python3 radar_cli.py seed       # seed ~22 companies + GitHub lists
+python3 radar_cli.py scan       # check all due sources
+python3 radar_cli.py discover   # verify + promote discovered sources
+python3 radar_cli.py loop 30    # keep scanning every 30 minutes
+
+python3 -m uvicorn main:app --port 8000   # API (also exposes /api/radar/*)
+cd ../frontend && npm install && npm run dev   # dashboard at /radar
+```
+
+Storage is a local SQLite file (`backend/radar.db`); the schema is written
+portably so it can be lifted to Supabase Postgres later.

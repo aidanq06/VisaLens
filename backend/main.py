@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from services.analysis.pipeline import run_analysis
 from services.extraction.extractor import ExtractionEngine
 from services.extraction.schemas import ExtractedOpportunity
+from services.radar.router import router as radar_router
 
 app = FastAPI(title="VisaLens AI - Extraction Service", version="0.1.0")
 
@@ -21,6 +22,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(radar_router)
 
 
 class ExtractionRequest(BaseModel):
