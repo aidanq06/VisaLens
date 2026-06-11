@@ -43,6 +43,8 @@ PHRASE_RULES: dict[str, list[RuleEntry]] = {
         _r(r"no compensation",              "unpaid", 0.95),
         _r(r"no payment",                   "unpaid", 0.95),
         _r(r"no employment or payment",     "unpaid", 0.95),
+        # Negated lists like "No employment, compensation, or work authorization"
+        _r(r"no employment[^.\n]{0,60}compensation", "unpaid", 0.96),
     ],
 
     # ------------------------------------------------------------------
@@ -66,6 +68,9 @@ PHRASE_RULES: dict[str, list[RuleEntry]] = {
         _r(r"\bgreen card holders\b",                    "green card holders",                      0.97),
         _r(r"international students are not eligible",   "international students are not eligible", 0.97),
         _r(r"non-u\.s\. citizens are not eligible",      "non-U.S. citizens are not eligible",      0.97),
+        # Phrasings like "International students and students on temporary visas are not eligible"
+        _r(r"international students[^.\n]{0,80}not eligible", "international students are not eligible", 0.97),
+        _r(r"temporary visas?[^.\n]{0,60}not eligible",       "international students are not eligible", 0.97),
     ],
 
     # ------------------------------------------------------------------
@@ -98,6 +103,8 @@ PHRASE_RULES: dict[str, list[RuleEntry]] = {
         _r(r"\bNSF REU\b",                            "NSF REU",                             0.92),
         _r(r"funding may be available",               "funding may be available",            0.92),
         _r(r"citizenship-based funding",              "citizenship-based funding",           0.92),
+        # "Funding is restricted to ..." / "funding restricted by ..."
+        _r(r"funding (?:is |may be )?restricted",     "funding restricted by citizenship or residency", 0.92),
     ],
 
     # ------------------------------------------------------------------

@@ -3,10 +3,13 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+from typing import Optional
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from services.analysis.pipeline import run_analysis
 from services.extraction.extractor import ExtractionEngine
 from services.extraction.schemas import ExtractedOpportunity
 
@@ -38,6 +41,31 @@ def extract(request: ExtractionRequest) -> ExtractedOpportunity:
         title=request.title,
         text=request.text,
         student_context=request.student_context,
+    )
+
+
+class AnalyzeRequest(BaseModel):
+    title: str = ""
+    text: str
+    student_status: str = "F-1"
+    school_level: str = "college"
+    opportunity_type: str = "other"
+    deadline_override: Optional[str] = None
+
+
+@app.post("/api/analyze")
+def analyze(request: AnalyzeRequest) -> dict:
+    """Full pipeline: extraction -> risk -> graph -> timeline -> verification.
+
+    Returns the complete VisaLensAnalysis object the frontend renders,
+    plus a `report_markdown` export.
+    """
+    return run_analysis(
+        title=request.title,
+        text=request.text,
+        student_status=request.student_status,
+        deadline_override=request.deadline_override,
+        opportunity_type_hint=request.opportunity_type,
     )
 
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { StudentContext } from "@/types/analysis";
 import { sampleOpportunities } from "@/data/mockAnalysis";
+import { analyzeOpportunity, storeAnalysis } from "@/lib/api";
 
 const STATUS_OPTIONS: { value: StudentContext["status"]; label: string }[] = [
   { value: "F-1", label: "F-1 Student Visa" },
@@ -83,6 +84,7 @@ export default function ScanPage() {
   const [text, setText] = useState("");
   const [deadline, setDeadline] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSubmit = text.trim().length > 30;
 
@@ -97,8 +99,26 @@ export default function ScanPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    router.push("/results?demo=true");
+    setError(null);
+    try {
+      const analysis = await analyzeOpportunity({
+        title,
+        text,
+        context: {
+          status,
+          school_level: schoolLevel,
+          opportunity_type: oppType,
+        },
+        deadlineOverride: deadline || undefined,
+      });
+      storeAnalysis(analysis);
+      router.push("/results");
+    } catch {
+      setLoading(false);
+      setError(
+        "Could not reach the analysis service. Make sure the backend is running, or view a demo report instead."
+      );
+    }
   }
 
   return (
@@ -407,6 +427,33 @@ export default function ScanPage() {
               >
                 Extracting requirements · Scoring risk · Building blocker graph…
               </p>
+            </div>
+          )}
+
+          {error && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "14px 16px",
+                borderRadius: "12px",
+                background: "rgba(239,67,67,0.06)",
+                border: "1px solid rgba(239,67,67,0.25)",
+              }}
+            >
+              <p style={{ fontSize: "12px", color: "#ef9a9a", marginBottom: "8px" }}>
+                {error}
+              </p>
+              <Link
+                href="/results?demo=true"
+                style={{
+                  fontSize: "12px",
+                  color: "#f5a623",
+                  fontFamily: "var(--font-mono)",
+                  textDecoration: "underline",
+                }}
+              >
+                View demo results →
+              </Link>
             </div>
           )}
         </form>
