@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sampleOpportunities } from "@/data/mockAnalysis";
 import ProfileMenu from "@/components/ui/ProfileMenu";
+import AnalyzeLink from "@/components/ui/AnalyzeLink";
 
 export default function Home() {
   return (
@@ -36,9 +37,7 @@ export default function Home() {
           <Link href="/radar" style={{ fontSize: "12px", color: "#7a7f99", textDecoration: "none", fontFamily: "var(--font-mono)" }}>
             Radar
           </Link>
-          <Link href="/scan" style={{ fontSize: "12px", padding: "8px 16px", borderRadius: "10px", background: "#f5a623", color: "#080910", fontWeight: "600", textDecoration: "none" }}>
-            Analyze →
-          </Link>
+          <AnalyzeLink />
           <ProfileMenu />
         </div>
       </nav>

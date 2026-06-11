@@ -1,104 +1,58 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { getUser, signIn, signOut, signUp } from "@/lib/auth";
+import { getUser, signOut } from "@/lib/auth";
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  background: "#080910",
-  border: "1px solid #252838",
-  borderRadius: "10px",
-  padding: "10px 14px",
-  fontSize: "13px",
-  color: "#e4e6f0",
-  outline: "none",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: "11px",
-  textTransform: "uppercase",
-  letterSpacing: "0.12em",
-  color: "#484d66",
-  fontFamily: "var(--font-mono)",
-  marginBottom: "6px",
+const itemStyle: React.CSSProperties = {
   display: "block",
+  width: "100%",
+  textAlign: "left",
+  padding: "9px 12px",
+  borderRadius: "7px",
+  fontSize: "12px",
+  color: "#e4e6f0",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  textDecoration: "none",
+  fontFamily: "var(--font-mono)",
 };
 
 export default function ProfileMenu() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"signup" | "signin">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [signedUp, setSignedUp] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     getUser().then(setUser);
   }, []);
 
-  function openModal() {
-    setError(null);
-    setSignedUp(false);
-    setOpen(true);
-  }
-
-  function switchTab(next: "signup" | "signin") {
-    setTab(next);
-    setError(null);
-    setSignedUp(false);
-  }
-
-  async function handleSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const { data, error } = await signIn(email, password);
-    setLoading(false);
-    if (error) {
-      setError(error.message);
+  function handleIconClick() {
+    if (!user) {
+      router.push("/auth");
       return;
     }
-    setUser(data.user);
-    setOpen(false);
-    router.push("/dashboard");
-  }
-
-  async function handleSignUp(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
-    setLoading(true);
-    const { error } = await signUp(email, password);
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setSignedUp(true);
+    setOpen((o) => !o);
   }
 
   async function handleSignOut() {
-    setLoading(true);
+    setSigningOut(true);
     await signOut();
-    setLoading(false);
+    setSigningOut(false);
     setUser(null);
     setOpen(false);
+    router.push("/");
   }
 
   return (
-    <>
+    <div style={{ position: "relative", flexShrink: 0 }}>
       {/* Profile icon */}
       <button
-        onClick={openModal}
+        onClick={handleIconClick}
         aria-label="Account"
         style={{
           width: "34px",
@@ -110,7 +64,6 @@ export default function ProfileMenu() {
           background: user ? "rgba(245,166,35,0.12)" : "#0f1018",
           border: `1px solid ${user ? "rgba(245,166,35,0.35)" : "#252838"}`,
           cursor: "pointer",
-          flexShrink: 0,
         }}
       >
         {user ? (
@@ -141,296 +94,48 @@ export default function ProfileMenu() {
         )}
       </button>
 
-      {/* Modal overlay */}
-      {open && (
-        <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            padding: "24px",
-          }}
-        >
+      {/* Dropdown (logged-in only) */}
+      {open && user && (
+        <>
+          {/* Click-away catcher */}
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setOpen(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 90 }}
+          />
+          <div
             style={{
-              position: "relative",
-              width: "100%",
-              maxWidth: "380px",
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              right: 0,
+              zIndex: 95,
+              minWidth: "160px",
+              padding: "6px",
               background: "#0f1018",
               border: "1px solid #252838",
-              borderRadius: "16px",
-              padding: "28px",
+              borderRadius: "10px",
             }}
           >
-            {/* Close */}
-            <button
+            <Link
+              href="/dashboard"
               onClick={() => setOpen(false)}
-              aria-label="Close"
+              style={itemStyle}
+            >
+              Dashboard
+            </Link>
+            <button
+              onClick={handleSignOut}
+              disabled={signingOut}
               style={{
-                position: "absolute",
-                top: "14px",
-                right: "14px",
-                width: "28px",
-                height: "28px",
-                borderRadius: "8px",
-                background: "transparent",
-                border: "none",
+                ...itemStyle,
                 color: "#7a7f99",
-                fontSize: "16px",
-                cursor: "pointer",
-                lineHeight: 1,
+                cursor: signingOut ? "wait" : "pointer",
               }}
             >
-              ✕
+              {signingOut ? "Signing out…" : "Sign Out"}
             </button>
-
-            {user ? (
-              /* Logged-in view */
-              <div>
-                <p
-                  style={{
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                    color: "#484d66",
-                    fontFamily: "var(--font-mono)",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Signed in as
-                </p>
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: "#e4e6f0",
-                    marginBottom: "24px",
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {user.email}
-                </p>
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    router.push("/dashboard");
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    background: "#f5a623",
-                    color: "#080910",
-                    border: "none",
-                    cursor: "pointer",
-                    marginBottom: "10px",
-                  }}
-                >
-                  Go to Dashboard
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  disabled={loading}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    fontSize: "14px",
-                    color: "#7a7f99",
-                    background: "#161823",
-                    border: "1px solid #252838",
-                    cursor: loading ? "wait" : "pointer",
-                  }}
-                >
-                  {loading ? "Signing out…" : "Sign Out"}
-                </button>
-              </div>
-            ) : (
-              /* Auth view */
-              <div>
-                {/* Tabs */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "4px",
-                    marginBottom: "24px",
-                    background: "#080910",
-                    border: "1px solid #252838",
-                    borderRadius: "10px",
-                    padding: "4px",
-                  }}
-                >
-                  {(
-                    [
-                      { key: "signup", label: "Create Account" },
-                      { key: "signin", label: "Sign In" },
-                    ] as const
-                  ).map(({ key, label }) => {
-                    const active = tab === key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => switchTab(key)}
-                        style={{
-                          flex: 1,
-                          padding: "8px",
-                          borderRadius: "7px",
-                          fontSize: "12px",
-                          fontWeight: active ? "600" : "400",
-                          color: active ? "#f5a623" : "#7a7f99",
-                          background: active
-                            ? "rgba(245,166,35,0.1)"
-                            : "transparent",
-                          border: `1px solid ${
-                            active ? "rgba(245,166,35,0.3)" : "transparent"
-                          }`,
-                          cursor: "pointer",
-                          fontFamily: "var(--font-mono)",
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {tab === "signin" ? (
-                  <form onSubmit={handleSignIn}>
-                    <div style={{ marginBottom: "14px" }}>
-                      <label style={labelStyle}>Email</label>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div style={{ marginBottom: "20px" }}>
-                      <label style={labelStyle}>Password</label>
-                      <input
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        background: loading ? "#1e2130" : "#f5a623",
-                        color: loading ? "#484d66" : "#080910",
-                        border: "none",
-                        cursor: loading ? "wait" : "pointer",
-                      }}
-                    >
-                      {loading ? "Signing in…" : "Sign In"}
-                    </button>
-                  </form>
-                ) : signedUp ? (
-                  <div style={{ textAlign: "center", padding: "16px 0" }}>
-                    <p style={{ fontSize: "20px", marginBottom: "12px" }}>✉️</p>
-                    <p style={{ fontSize: "14px", color: "#e4e6f0" }}>
-                      Check your email to confirm your account
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "12px",
-                        color: "#7a7f99",
-                        marginTop: "8px",
-                      }}
-                    >
-                      Once confirmed, visit your dashboard to complete your
-                      profile.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSignUp}>
-                    <div style={{ marginBottom: "14px" }}>
-                      <label style={labelStyle}>Email</label>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div style={{ marginBottom: "14px" }}>
-                      <label style={labelStyle}>Password</label>
-                      <input
-                        type="password"
-                        required
-                        minLength={6}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <div style={{ marginBottom: "20px" }}>
-                      <label style={labelStyle}>Confirm Password</label>
-                      <input
-                        type="password"
-                        required
-                        value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        background: loading ? "#1e2130" : "#f5a623",
-                        color: loading ? "#484d66" : "#080910",
-                        border: "none",
-                        cursor: loading ? "wait" : "pointer",
-                      }}
-                    >
-                      {loading ? "Creating account…" : "Create Account"}
-                    </button>
-                  </form>
-                )}
-
-                {error && (
-                  <p
-                    style={{
-                      marginTop: "14px",
-                      fontSize: "12px",
-                      color: "#ef9a9a",
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      background: "rgba(239,67,67,0.06)",
-                      border: "1px solid rgba(239,67,67,0.25)",
-                    }}
-                  >
-                    {error}
-                  </p>
-                )}
-              </div>
-            )}
           </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 }
