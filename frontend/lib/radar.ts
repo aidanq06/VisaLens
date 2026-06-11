@@ -54,6 +54,31 @@ export type RadarStats = {
   alerts_sent: number;
 };
 
+export type ActionLabel =
+  | "apply_now"
+  | "verify_first"
+  | "ask_advisor"
+  | "watch"
+  | "likely_blocked"
+  | "low_priority";
+
+export type ActionItem = RadarOpportunity & {
+  has_analysis: boolean;
+  action_label: ActionLabel;
+  action_title: string;
+  action_score: number;
+  reasons: string[];
+  score_reasons: string[];
+  next_steps: string[];
+};
+
+export type ActionQueue = {
+  counts: Record<ActionLabel, number>;
+  total: number;
+  estimated_minutes_saved: number;
+  items: ActionItem[];
+};
+
 async function getJSON<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
   if (!res.ok) throw new Error(`${path} returned ${res.status}`);
@@ -64,6 +89,9 @@ export const fetchOpportunities = (view: RadarView) =>
   getJSON<RadarOpportunity[]>(`/api/radar/opportunities?view=${view}&limit=200`);
 
 export const fetchSources = () => getJSON<RadarSource[]>("/api/radar/sources");
+
+export const fetchActionQueue = () =>
+  getJSON<ActionQueue>("/api/radar/action-queue?limit=300");
 
 export const fetchStats = () => getJSON<RadarStats>("/api/radar/stats");
 

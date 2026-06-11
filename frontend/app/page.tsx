@@ -59,8 +59,9 @@ export default function Home() {
         <p style={{ fontSize: "18px", lineHeight: "1.7", maxWidth: "620px", margin: "0 auto 40px", color: "#7a7f99" }}>
           One workflow for international students: the Radar discovers fresh
           internships straight from company career feeds, VisaLens scores your
-          eligibility risk on each one, and the verification kit tells you exactly
-          what to confirm before applying.
+          eligibility risk on each one, the Action Queue tells you what to do
+          first today — and when the organizer replies, your case updates with
+          the blockers resolved.
         </p>
 
         <div style={{ display: "flex", flexDirection: "row", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -81,9 +82,9 @@ export default function Home() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", borderRadius: "16px", overflow: "hidden", background: "#252838" }}>
           {[
             { step: "01", title: "Radar finds roles early", desc: "Company career feeds are monitored directly, so internships surface here before public job boards — each scored for fit and urgency.", icon: "◉" },
-            { step: "02", title: "AI extracts requirements", desc: 'Phrases like "eligible to work in the U.S." or "U.S. citizens only" are detected and classified — automatically for every role.', icon: "◎" },
-            { step: "03", title: "Get your risk report", desc: "Risk score, blocker graph, deadline urgency — one click from any radar role, or paste any listing manually.", icon: "◈" },
-            { step: "04", title: "Verify, then apply", desc: "Questions for the organizer and your DSO, a ready-to-send email draft, and a downloadable report.", icon: "✓" },
+            { step: "02", title: "AI extracts, rules decide", desc: 'Phrases like "eligible to work in the U.S." are extracted as evidence; a deterministic rule engine scores the risk — every point auditable.', icon: "◎" },
+            { step: "03", title: "Action Queue ranks your day", desc: "Every role is classified: apply now, verify first, ask your DSO, or likely blocked — with the reasons and next steps spelled out.", icon: "◈" },
+            { step: "04", title: "Verify, update, decide", desc: "Send the generated organizer email, paste the reply, and watch the case update: blockers resolved, score recalculated, decision clearer.", icon: "✓" },
           ].map(({ step, title, desc, icon }) => (
             <div key={step} style={{ padding: "32px 28px", background: "#0f1018" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>

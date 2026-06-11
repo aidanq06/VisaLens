@@ -1,8 +1,12 @@
 # VisaLens — Demo Guide
 
-The complete story in one line: **the Radar finds internships early, VisaLens
-instantly scores eligibility risk for international students, and the
-verification kit turns "I'm not sure I can apply" into an action plan.**
+The complete story in one line: **the Radar finds internships early, the
+Action Queue tells the student what to do first today, VisaLens scores
+eligibility risk with auditable evidence, and when the organizer replies the
+case updates itself — blockers resolved, score recalculated.**
+
+Core pitch line: *"The LLM extracts ambiguity; deterministic systems make
+the risk decision auditable."*
 
 ---
 
@@ -23,11 +27,16 @@ npm run dev
 ```
 
 Open http://localhost:3000. Optional: set `DISCORD_WEBHOOK_URL` in
-`backend/.env` to show live Discord alerts.
+`backend/.env` to show live Discord alerts (alerts now carry action labels:
+🔥 Apply now / ⚠️ Verify first / 🎓 Ask DSO first / 🚫 Likely blocked).
 
-**Pre-demo check (30 seconds):** open `/radar` — you should see roles with
-scores. Open `/scan`, click the `internship` chip, submit — you should land
-on a results page. If both work, you're demo-ready.
+**Pre-demo check (30 seconds):** open `/radar` — the Action Queue should be
+the first tab with grouped, labeled roles. Open `/scan`, click the
+`internship` chip, submit — you should land on a results page with the
+point-by-point "Why this score" trail. If both work, you're demo-ready.
+
+**Morning of the demo:** run `python3 radar_cli.py scan` so freshness scores
+are high and the Apply Now group is full.
 
 ---
 
@@ -35,64 +44,85 @@ on a results page. If both work, you're demo-ready.
 
 ### Beat 1 — Landing page (15s)
 "International students face two problems: finding internships early enough,
-and knowing whether they're even eligible to accept them. VisaLens solves
-both in one workflow." Point at the 4-step strip: discover → extract →
-score → verify.
+and knowing whether they can even accept them. VisaLens solves both — and it
+doesn't stop at a report. It tells you what to do first, and it updates when
+you get answers." Point at the 4-step strip: discover → extract/score →
+action queue → verify & update.
 
-### Beat 2 — Radar: discovery (45s)
-Click **Find Internships**.
+### Beat 2 — Action Queue: the daily decision system (45s)
+Click **Find Internships**. The Action Queue is the default view.
 
-- Point at the stats strip: "~180 live roles, pulled directly from company
-  career APIs — Greenhouse, Lever, Ashby — the same minute they go up,
-  before they hit job boards."
-- **Apply Now tab**: real internships at Notion, Cloudflare, Stripe, Palantir,
-  ranked by urgency and personal fit. Every score is deterministic and
-  auditable — no LLM guessing.
-- Click **Source Health**: "this is a self-healing source graph — sources are
-  auto-discovered from public lists, verified against the live API, scored,
-  and retired when they break." (During our build it auto-discovered and
-  promoted 17 new company sources on its own.)
+- Point at the impact strip: "~220 live roles triaged automatically —
+  about 38 hours of manual review time saved, estimated."
+- Walk the groups top-down: "**Apply now** — high fit, fresh, no detected
+  restriction. **Ask DSO first** — confirmed paid roles where CPT/OPT
+  coordination is the real question. **Likely blocked** — explicit
+  citizenship or funding restrictions, filtered before the student wastes
+  an evening on them."
+- "Every label is deterministic — the reasons are printed on each card.
+  No LLM decides anyone's fate here."
 
-### Beat 3 — The integration moment (45s)
-Back on **Apply Now**, pick a role and click **Eligibility report**.
+### Beat 3 — Auditable risk report (45s)
+Click **Eligibility report** on any role — or go to `/scan` and submit the
+`internship` sample chip for the strongest version.
 
-"Here's the part nothing else does: every discovered role has already been
-through our risk engine." Walk the report top-down: risk score and why,
-category breakdown, blocker graph, deadline-vs-verification timeline,
-and the verification kit with questions for the organizer and DSO plus a
-ready-to-send email. Click **Download report**.
+Walk the **Why this score** trail: "+45 work authorization language — with
+the exact sentence from the listing and 97% extraction confidence. +25 paid
+role. +20 for the combination. +20 unclear international eligibility. The AI
+extracts the evidence; the score is pure rules — clamped, auditable,
+reproducible." Then flash the blocker graph, the timeline crunch, and the
+verification kit with the ready-to-send organizer email.
 
-### Beat 4 — Manual analysis: the contrast (60s)
-Click **New scan** (or Manual analysis). Use the three sample chips —
-they're rigged to show the full range:
+### Beat 4 — The living case (45s) ← the wow moment
+On the results page, click **Got a reply? Update case →**.
 
-1. **hackathon** chip → submit → **score 0, LOW risk**, open worldwide.
-2. **research** chip (NSF REU) → submit → **score 100, HIGH risk**, citizenship
-   restriction detected, blocker graph shows the dependency chain.
-3. **internship** chip → submit → **HIGH/unclear**: paid + "eligible to work in
-   the U.S." language, and the timeline shows verification takes ~5 days but
-   only 2 remain — "ask the organizer today."
+"The student sends that email. Two days later the organizer replies. Watch."
+Click **Sample reply** (it's the canonical organizer response), then
+**Analyze clarification**.
+
+- Score animates 100 → 55, HIGH → MEDIUM-HIGH.
+- Resolved: international eligibility — the organizer confirmed F-1 students
+  may apply.
+- Still needs verification: paid role, CPT/OPT work authorization, tight
+  deadline.
+- Case status: **"Conditionally possible — advisor verification needed."**
+
+"It never says 'you're eligible.' It says exactly what got resolved, what
+remains, and who to ask next. That's the difference between a chatbot answer
+and case infrastructure."
 
 ### Beat 5 — Close (15s)
-"Deterministic risk engine, evidence with confidence scores, responsible
-language — it never says 'you're eligible,' it tells you exactly what to
-verify and who to ask. Find it early, know your risk, apply with confidence."
+"Deterministic risk engine, evidence with confidence scores, a daily action
+queue, and a case that updates as the student verifies. Find it early, know
+your risk, act in the right order."
 
 ---
 
-## Live-wow options (if time allows)
+## Contrast cases (if time allows, ~30s)
 
-- Click **Scan now** on the radar during the demo — it re-checks due sources
-  live and pulls in anything new.
-- Paste a real posting from any Greenhouse/Lever job page into `/scan` to
-  show it working on unseen data.
+On `/scan`, the three sample chips show the full range:
+
+1. **hackathon** chip → **score 0, LOW** — open worldwide, no blockers.
+2. **research** chip (NSF REU) → **score 100, HIGH** — citizenship + funding
+   restriction, blocker chain in the graph.
+3. **internship** chip → the Beat 3/4 case above.
+
+## Live-wow options
+
+- Click **Scan now** on the radar — it re-checks due sources live.
+- Paste a real posting from any Greenhouse/Lever job page into `/scan`.
+- Type your own "organizer reply" into `/case` and show the diff change —
+  e.g. add "unfortunately international students are not eligible" and the
+  status flips to *Likely not eligible*.
 
 ## If something breaks
 
-- **Radar empty / backend down** → the radar shows an error banner; restart
-  `uvicorn`. Roles persist in `backend/radar.db`, so a scan is not needed
-  mid-demo.
-- **Results page** → if the live flow fails, `/results?demo=true` always
-  renders a polished demo report (marked with a "Demo data" badge).
+- **Radar empty / backend down** → error banner; restart `uvicorn`. Roles
+  persist in `backend/radar.db`, so a scan is not needed mid-demo.
+- **Results page** → `/results?demo=true` always renders a polished demo
+  report (marked "Demo data") including the score breakdown — no backend
+  needed.
+- **Case page** → needs the backend, but the sample-reply flow only takes
+  one click to redo after a restart.
 - **Full radar reset**: delete `backend/radar.db`, then re-run
   `python3 radar_cli.py seed && python3 radar_cli.py scan`.

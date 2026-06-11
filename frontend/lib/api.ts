@@ -1,4 +1,4 @@
-import type { StudentContext, VisaLensAnalysis } from "@/types/analysis";
+import type { CaseDiff, StudentContext, VisaLensAnalysis } from "@/types/analysis";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -41,6 +41,35 @@ export async function analyzeOpportunity(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export type ClarificationResult = {
+  updated_analysis: VisaLensAnalysis;
+  case_diff: CaseDiff;
+};
+
+/** The living-case update: send the original analysis plus a pasted
+ *  organizer/advisor reply, get the re-analysis and a before/after diff. */
+export async function analyzeClarification(
+  originalAnalysis: VisaLensAnalysis,
+  clarificationText: string,
+  source: "organizer" | "advisor" | "system" = "organizer",
+  studentStatus: string = "F-1"
+): Promise<ClarificationResult> {
+  const res = await fetch(`${API_BASE}/api/analyze-clarification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      original_analysis: originalAnalysis,
+      clarification_text: clarificationText,
+      clarification_source: source,
+      student_status: studentStatus,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Clarification service returned ${res.status}`);
+  }
+  return (await res.json()) as ClarificationResult;
 }
 
 export function storeAnalysis(analysis: VisaLensAnalysis) {

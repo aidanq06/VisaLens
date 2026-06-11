@@ -111,6 +111,20 @@ export default function ResultsContent() {
             </span>
           )}
           <RiskBadge level={analysis.risk.level} />
+          <Link
+            href="/case"
+            style={{
+              fontSize: "12px",
+              padding: "7px 14px",
+              borderRadius: "8px",
+              color: "#080910",
+              background: "#f5a623",
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            Got a reply? Update case →
+          </Link>
           {analysis.report_markdown && (
             <button
               onClick={() => downloadReport(analysis)}

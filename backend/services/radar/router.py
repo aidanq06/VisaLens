@@ -8,6 +8,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from .action_queue import build_action_queue
 from .db import get_conn, init_db, rows_to_dicts
 from .scanner import scan, verify_discoveries
 from .seeds import seed
@@ -110,6 +111,14 @@ def update_status(opp_id: int, body: StatusUpdate) -> dict:
         return {"id": opp_id, "status": body.status}
     finally:
         conn.close()
+
+
+@router.get("/action-queue")
+def action_queue(limit: int = 300) -> dict[str, Any]:
+    """Daily decision queue: every tracked role classified into a
+    deterministic action (apply now / verify first / ask advisor /
+    likely blocked / watch / low priority) with reasons and next steps."""
+    return build_action_queue(limit=limit)
 
 
 @router.get("/sources")

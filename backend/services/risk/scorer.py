@@ -52,6 +52,32 @@ def _contains_any(value: str | None, *needles: str) -> bool:
     return any(n in lowered for n in needles)
 
 
+def _find_evidence(extracted: dict[str, Any], *fields: str) -> dict[str, Any] | None:
+    """Best extraction-evidence item for any of the given fields."""
+    best: dict[str, Any] | None = None
+    for ev in extracted.get("evidence") or []:
+        if ev.get("field") in fields and ev.get("source_text"):
+            if best is None or (ev.get("confidence") or 0) > (best.get("confidence") or 0):
+                best = ev
+    return best
+
+
+def _entry(
+    points: int,
+    label: str,
+    extracted: dict[str, Any],
+    fields: tuple[str, ...] = (),
+    fallback_snippet: str | None = None,
+) -> dict[str, Any]:
+    ev = _find_evidence(extracted, *fields) if fields else None
+    return {
+        "points": points,
+        "label": label,
+        "evidence": (ev.get("source_text") if ev else None) or fallback_snippet,
+        "confidence": ev.get("confidence") if ev else None,
+    }
+
+
 def calculate_risk(
     extracted: dict[str, Any],
     student_status: str = "f1",
@@ -62,6 +88,7 @@ def calculate_risk(
     `student_status` is one of: f1, j1, international_other, domestic, unsure.
     """
     reasons: list[str] = []
+    breakdown: list[dict[str, Any]] = []
     score = 0
 
     citizenship = extracted.get("citizenship_requirement") or ""
@@ -90,35 +117,75 @@ def calculate_risk(
     if citizens_only:
         score += 90
         reasons.append("Listing restricts participation to U.S. citizens only")
+        breakdown.append(_entry(
+            90, "Citizenship restriction: U.S. citizens only", extracted,
+            ("citizenship_requirement", "international_eligibility"),
+            fallback_snippet=citizenship or None,
+        ))
     elif pr_or_citizens:
         score += 85
         reasons.append(
             "Listing restricts participation to U.S. citizens or permanent residents"
         )
+        breakdown.append(_entry(
+            85, "Citizenship restriction: citizens or permanent residents only",
+            extracted, ("citizenship_requirement", "international_eligibility"),
+            fallback_snippet=citizenship or None,
+        ))
     if has_work_auth:
         score += 45
         reasons.append("Work authorization language detected")
+        breakdown.append(_entry(
+            45, "Work authorization language detected", extracted,
+            ("work_authorization_language",), fallback_snippet=work_auth,
+        ))
     if is_paid:
         score += 25
         reasons.append("Paid role detected")
+        breakdown.append(_entry(25, "Paid role detected", extracted, ("paid_status",)))
     if is_paid and has_work_auth:
         score += 20
         reasons.append(
             "Paid role combined with work authorization language increases risk"
         )
+        breakdown.append(_entry(
+            20, "Paid role combined with work authorization language", extracted,
+        ))
     if worldwide and not restricted:
         score -= 35
         reasons.append("Opportunity appears open worldwide, which lowers risk")
+        breakdown.append(_entry(
+            -35, "Opportunity appears open worldwide", extracted,
+            ("remote_or_global_status", "international_eligibility"),
+            fallback_snippet=extracted.get("remote_or_global_status"),
+        ))
     if unclear and not restricted:
         score += 20
         reasons.append("International eligibility is not clearly stated")
+        breakdown.append(_entry(
+            20, "International eligibility not clearly stated", extracted,
+            fallback_snippet="No explicit F-1/J-1 or international eligibility "
+            "language found in the listing",
+        ))
     if funding_restricted:
         score += 50
         reasons.append("Funding appears restricted by citizenship or residency")
+        breakdown.append(_entry(
+            50, "Funding restricted by citizenship or residency", extracted,
+            ("funding_restriction",),
+            fallback_snippet=extracted.get("funding_restriction"),
+        ))
 
     # --- Student context adjustment ---
     if student_status == "domestic":
-        score = round(score * 0.2)
+        adjusted = round(score * 0.2)
+        if adjusted != score:
+            breakdown.append(_entry(
+                adjusted - score,
+                "Domestic status adjustment — visa risks largely do not apply",
+                extracted,
+            ))
+        score = adjusted
         reasons.append(
             "You indicated domestic status, so visa-related risks largely do not "
             "apply — verify other requirements normally"
@@ -240,6 +307,10 @@ def calculate_risk(
             "timeline": cat_timeline,
         },
         "reasons": reasons,
+        # Auditable point-by-point trail: every entry is {points, label,
+        # evidence, confidence}. Sum may exceed the final score because the
+        # total is clamped to 0-100.
+        "score_breakdown": breakdown,
     }
 
 

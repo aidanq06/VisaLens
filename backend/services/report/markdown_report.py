@@ -57,6 +57,23 @@ def generate_markdown_report(analysis: dict[str, Any], today: date | None = None
         lines += ["", "**Main concerns:**", ""]
         lines += [f"- {r}" for r in risk["reasons"]]
 
+    if risk.get("score_breakdown"):
+        lines += ["", "### Why this score (point by point)", ""]
+        for item in risk["score_breakdown"]:
+            points = item.get("points") or 0
+            sign = "+" if points >= 0 else ""
+            lines.append(f"- **{sign}{points}** {item.get('label')}")
+            if item.get("evidence"):
+                conf = item.get("confidence")
+                conf_note = f" (confidence {conf:.0%})" if conf else ""
+                lines.append(f"  - Evidence: \"{item['evidence']}\"{conf_note}")
+        lines += [
+            "",
+            "_Scores are computed by deterministic rules; the total is clamped "
+            "to 0-100. The AI extracts evidence — the risk decision itself is "
+            "rule-based and auditable._",
+        ]
+
     lines += ["", "## Extracted opportunity details", ""]
     if extracted:
         rows = [

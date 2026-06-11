@@ -7,23 +7,69 @@ import type { RiskLevel } from "@/types/analysis";
 import RiskBadge from "@/components/ui/RiskBadge";
 import { storeAnalysis } from "@/lib/api";
 import {
+  fetchActionQueue,
   fetchOpportunities,
   fetchOpportunityAnalysis,
   fetchSources,
   fetchStats,
   markStatus,
   triggerScan,
+  type ActionItem,
+  type ActionLabel,
+  type ActionQueue,
   type RadarOpportunity,
   type RadarSource,
   type RadarStats,
   type RadarView,
 } from "@/lib/radar";
 
-const TABS: { id: RadarView | "source_health"; label: string }[] = [
+type TabId = RadarView | "source_health" | "action_queue";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "action_queue", label: "Action Queue" },
   { id: "apply_now", label: "Apply Now" },
   { id: "found_today", label: "Found Today" },
   { id: "source_of_truth", label: "Source-of-Truth Only" },
   { id: "source_health", label: "Source Health" },
+];
+
+const ACTION_META: Record<
+  ActionLabel,
+  { color: string; blurb: string }
+> = {
+  apply_now: {
+    color: "#22c55e",
+    blurb: "High fit, fresh, no major eligibility restriction detected.",
+  },
+  verify_first: {
+    color: "#f5a623",
+    blurb: "Worth pursuing, but clarify eligibility with the organizer before investing time.",
+  },
+  ask_advisor: {
+    color: "#38bdf8",
+    blurb: "Paid role or work-authorization language — bring these to your DSO/advisor.",
+  },
+  watch: {
+    color: "#a78bfa",
+    blurb: "Good fit but not urgent today — save and revisit.",
+  },
+  likely_blocked: {
+    color: "#ef4343",
+    blurb: "Explicit citizenship, residency, or funding restriction detected.",
+  },
+  low_priority: {
+    color: "#7a7f99",
+    blurb: "Low fit or stale — no action needed today.",
+  },
+};
+
+const ACTION_ORDER: ActionLabel[] = [
+  "apply_now",
+  "verify_first",
+  "ask_advisor",
+  "watch",
+  "likely_blocked",
+  "low_priority",
 ];
 
 const MONO = "var(--font-mono)";
@@ -70,18 +116,140 @@ function Chip({ children, color = "#7a7f99" }: { children: React.ReactNode; colo
   );
 }
 
+function ActionRow({
+  item,
+  onReport,
+  onApplied,
+  reportLoading,
+}: {
+  item: ActionItem;
+  onReport: (item: ActionItem) => void;
+  onApplied: (item: ActionItem) => void;
+  reportLoading: boolean;
+}) {
+  const meta = ACTION_META[item.action_label];
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "16px",
+        background: "#0f1018",
+        border: "1px solid #252838",
+        borderLeft: `3px solid ${meta.color}`,
+        borderRadius: "12px",
+        padding: "14px 18px",
+        flexWrap: "wrap",
+      }}
+    >
+      {/* Action score */}
+      <div style={{ width: "52px", textAlign: "center", paddingTop: "2px" }}>
+        <p style={{ fontSize: "20px", fontWeight: 600, fontFamily: MONO, color: meta.color }}>
+          {Math.round(item.action_score)}
+        </p>
+        <p style={{ fontSize: "9px", color: "#484d66", fontFamily: MONO }}>action</p>
+      </div>
+
+      {/* Role + reasons */}
+      <div style={{ flex: "1 1 320px", minWidth: 0 }}>
+        <p style={{ fontSize: "14px", fontWeight: 500, color: "#e4e6f0", marginBottom: "4px" }}>
+          {item.company_name} — {item.title}
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
+          <span style={{ fontSize: "11px", color: "#7a7f99", fontFamily: MONO }}>
+            {item.location || "Location n/a"}
+          </span>
+          {item.season && <Chip color="#f5a623">{item.season}</Chip>}
+          <Chip color={item.is_source_of_truth ? "#22c55e" : "#7a7f99"}>
+            {item.source_type}
+          </Chip>
+          <span style={{ fontSize: "10px", color: "#484d66", fontFamily: MONO }}>
+            fit {Math.round(item.fit_score)} · fresh {Math.round(item.freshness_score)}
+          </span>
+          {item.visa_risk_level && (
+            <RiskBadge level={item.visa_risk_level as RiskLevel} size="sm" />
+          )}
+        </div>
+        <p style={{ fontSize: "11px", color: "#7a7f99", lineHeight: 1.5 }}>
+          {item.reasons.join(" · ")}
+        </p>
+        <p style={{ fontSize: "11px", color: meta.color, lineHeight: 1.5, marginTop: "2px" }}>
+          → {item.next_steps[0]}
+        </p>
+      </div>
+
+      {/* Buttons */}
+      <div style={{ display: "flex", gap: "6px", paddingTop: "2px" }}>
+        {item.has_analysis && (
+          <button
+            onClick={() => onReport(item)}
+            disabled={reportLoading}
+            style={{
+              fontSize: "11px",
+              padding: "6px 12px",
+              borderRadius: "8px",
+              color: "#f5a623",
+              background: "rgba(245,166,35,0.08)",
+              border: "1px solid rgba(245,166,35,0.25)",
+              cursor: "pointer",
+              fontFamily: MONO,
+            }}
+          >
+            {reportLoading ? "Loading…" : "Eligibility report"}
+          </button>
+        )}
+        <a
+          href={item.apply_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontSize: "11px",
+            padding: "6px 12px",
+            borderRadius: "8px",
+            color: "#080910",
+            background: "#f5a623",
+            textDecoration: "none",
+            fontWeight: 600,
+            fontFamily: MONO,
+          }}
+        >
+          Apply ↗
+        </a>
+        <button
+          onClick={() => onApplied(item)}
+          disabled={item.status === "applied"}
+          style={{
+            fontSize: "11px",
+            padding: "6px 12px",
+            borderRadius: "8px",
+            color: item.status === "applied" ? "#22c55e" : "#7a7f99",
+            background: "#161823",
+            border: `1px solid ${item.status === "applied" ? "rgba(34,197,94,0.35)" : "#252838"}`,
+            cursor: item.status === "applied" ? "default" : "pointer",
+            fontFamily: MONO,
+          }}
+        >
+          {item.status === "applied" ? "Applied ✓" : "Mark applied"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function RadarPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<RadarView | "source_health">("apply_now");
+  const [tab, setTab] = useState<TabId>("action_queue");
   const [opps, setOpps] = useState<RadarOpportunity[]>([]);
   const [sources, setSources] = useState<RadarSource[]>([]);
+  const [queue, setQueue] = useState<ActionQueue | null>(null);
   const [stats, setStats] = useState<RadarStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [reportLoading, setReportLoading] = useState<number | null>(null);
+  const [showLowPriority, setShowLowPriority] = useState(false);
 
-  const load = useCallback(async (activeTab: RadarView | "source_health") => {
+  const load = useCallback(async (activeTab: TabId) => {
     setLoading(true);
     setError(null);
     try {
@@ -89,6 +257,8 @@ export default function RadarPage() {
       setStats(statsData);
       if (activeTab === "source_health") {
         setSources(await fetchSources());
+      } else if (activeTab === "action_queue") {
+        setQueue(await fetchActionQueue());
       } else {
         setOpps(await fetchOpportunities(activeTab));
       }
@@ -134,6 +304,16 @@ export default function RadarPage() {
       await markStatus(opp.id, "applied");
       setOpps((prev) =>
         prev.map((o) => (o.id === opp.id ? { ...o, status: "applied" } : o))
+      );
+      setQueue((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((o) =>
+                o.id === opp.id ? { ...o, status: "applied" } : o
+              ),
+            }
+          : prev
       );
     } catch {
       setError("Could not update status.");
@@ -328,6 +508,94 @@ export default function RadarPage() {
           <p style={{ fontSize: "13px", color: "#7a7f99", fontFamily: MONO, padding: "40px 0", textAlign: "center" }}>
             Loading radar data…
           </p>
+        ) : tab === "action_queue" && queue ? (
+          /* ── Action Queue: what to do first today ── */
+          <div>
+            {/* Impact strip */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "16px",
+                flexWrap: "wrap",
+                background: "rgba(245,166,35,0.05)",
+                border: "1px solid rgba(245,166,35,0.18)",
+                borderRadius: "12px",
+                padding: "12px 18px",
+                marginBottom: "20px",
+              }}
+            >
+              <p style={{ fontSize: "12px", color: "#e4e6f0" }}>
+                <strong style={{ color: "#f5a623", fontFamily: MONO }}>{queue.total}</strong>{" "}
+                roles triaged automatically
+              </p>
+              <p style={{ fontSize: "12px", color: "#7a7f99" }}>
+                Estimated manual review time saved:{" "}
+                <strong style={{ color: "#e4e6f0", fontFamily: MONO }}>
+                  ≈ {Math.round(queue.estimated_minutes_saved / 60)} hours
+                </strong>{" "}
+                ({queue.total} roles × 10 min)
+              </p>
+              <p style={{ fontSize: "11px", color: "#484d66", fontFamily: MONO }}>
+                deterministic · every label has reasons
+              </p>
+            </div>
+
+            {ACTION_ORDER.filter(
+              (label) =>
+                queue.counts[label] > 0 &&
+                (label !== "low_priority" || showLowPriority)
+            ).map((label) => {
+              const meta = ACTION_META[label];
+              const items = queue.items.filter((i) => i.action_label === label);
+              return (
+                <div key={label} style={{ marginBottom: "28px" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "4px" }}>
+                    <h2 style={{ fontSize: "15px", fontWeight: 600, color: meta.color }}>
+                      {items[0].action_title}
+                    </h2>
+                    <span style={{ fontSize: "11px", color: "#484d66", fontFamily: MONO }}>
+                      {items.length} role{items.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#7a7f99", marginBottom: "10px" }}>
+                    {meta.blurb}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {items.map((item) => (
+                      <ActionRow
+                        key={item.id}
+                        item={item}
+                        onReport={openReport}
+                        onApplied={markApplied}
+                        reportLoading={reportLoading === item.id}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {queue.counts.low_priority > 0 && (
+              <button
+                onClick={() => setShowLowPriority((v) => !v)}
+                style={{
+                  fontSize: "12px",
+                  padding: "9px 16px",
+                  borderRadius: "8px",
+                  color: "#7a7f99",
+                  background: "#161823",
+                  border: "1px solid #252838",
+                  cursor: "pointer",
+                  fontFamily: MONO,
+                }}
+              >
+                {showLowPriority
+                  ? "Hide low priority"
+                  : `Show ${queue.counts.low_priority} low-priority roles`}
+              </button>
+            )}
+          </div>
         ) : tab === "source_health" ? (
           /* ── Source health table ── */
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

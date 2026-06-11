@@ -27,6 +27,25 @@ def alert_level(urgency: float) -> Optional[str]:
     return None
 
 
+_ACTION_EMOJI = {
+    "apply_now": "🔥 Apply now",
+    "verify_first": "⚠️ Verify first",
+    "ask_advisor": "🎓 Ask DSO/advisor first",
+    "likely_blocked": "🚫 Likely blocked",
+    "watch": "🕒 Watch",
+    "low_priority": "· Low priority",
+}
+
+
+def _action_field(opp: dict[str, Any]) -> Optional[dict[str, Any]]:
+    try:
+        from .action_queue import classify
+        label, _ = classify(opp, opp.get("_risk_categories") or {})
+        return {"name": "Action", "value": _ACTION_EMOJI[label], "inline": True}
+    except Exception:  # never let labeling break an alert
+        return None
+
+
 def build_alert_payload(opp: dict[str, Any], level: str) -> dict[str, Any]:
     reasons = opp.get("score_reasons") or []
     fields = [
@@ -41,6 +60,9 @@ def build_alert_payload(opp: dict[str, Any], level: str) -> dict[str, Any]:
             "inline": True,
         },
     ]
+    action = _action_field(opp)
+    if action:
+        fields.insert(0, action)
     if reasons:
         fields.append({"name": "Why", "value": "; ".join(reasons)[:1000], "inline": False})
     return {

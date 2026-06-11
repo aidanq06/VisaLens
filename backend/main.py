@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from services.analysis.clarification import analyze_clarification
 from services.analysis.pipeline import run_analysis
 from services.extraction.extractor import ExtractionEngine
 from services.extraction.schemas import ExtractedOpportunity
@@ -69,6 +70,33 @@ def analyze(request: AnalyzeRequest) -> dict:
         student_status=request.student_status,
         deadline_override=request.deadline_override,
         opportunity_type_hint=request.opportunity_type,
+    )
+
+
+class ClarificationRequest(BaseModel):
+    original_analysis: dict
+    clarification_text: str
+    clarification_source: str = "organizer"  # organizer | advisor | system
+    student_status: str = "F-1"
+
+
+@app.post("/api/analyze-clarification")
+def clarify(request: ClarificationRequest) -> dict:
+    """The living-case update: paste an organizer/advisor reply and get back
+    the re-analyzed case plus a diff (score before/after, resolved blockers,
+    remaining blockers, updated case status and recommendation)."""
+    status_map = {
+        "f-1": "f1", "f1": "f1", "j-1": "j1", "j1": "j1",
+        "international_other": "international_other",
+        "domestic": "domestic", "unsure": "unsure",
+    }
+    return analyze_clarification(
+        original_analysis=request.original_analysis,
+        clarification_text=request.clarification_text,
+        clarification_source=request.clarification_source,
+        student_status=status_map.get(
+            request.student_status.strip().lower(), "international_other"
+        ),
     )
 
 

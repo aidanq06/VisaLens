@@ -89,6 +89,12 @@ def _insert_opportunity(
     analysis = _analyze_visa(title, description)
     opp["visa_risk_score"] = analysis["risk"]["score"]
     opp["visa_risk_level"] = analysis["risk"]["level"]
+    # Category levels travel with the in-memory opp so alerts can attach
+    # an action label without re-reading the stored JSON.
+    opp["_risk_categories"] = {
+        k: (v or {}).get("level") or "low"
+        for k, v in (analysis["risk"].get("categories") or {}).items()
+    }
 
     cursor = conn.execute(
         """INSERT INTO opportunities

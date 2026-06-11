@@ -16,13 +16,18 @@ VisaLens turns that confusion into a structured risk report. Paste an opportunit
 
 - Extracts hidden eligibility signals from opportunity text (work auth language, citizenship restrictions, funding limits)
 - Scores risk across seven categories using deterministic rules — not just AI guessing
+- Shows the score point by point: every +45 or +25 is tied to an evidence snippet from the listing, with a confidence score
 - Visualizes blockers as a dependency graph so you can see exactly what's blocking you
 - Simulates deadline urgency based on how long verification actually takes
 - Generates the questions to ask the organizer, the questions to ask your advisor, and a ready-to-send email draft
+- **Action Queue**: classifies every discovered role into *apply now / verify first / ask DSO first / likely blocked / watch* — so the student knows what to do first today, not just what exists
+- **Living case**: paste the organizer's reply and the case re-analyzes — risk score before → after, blockers resolved, blockers remaining, updated recommendation
 
 ## What it doesn't do
 
 VisaLens is not a chatbot. It does not give legal or immigration advice. It shows what needs to be verified so you can make an informed decision yourself.
+
+> The LLM extracts ambiguity; deterministic systems make the risk decision auditable.
 
 ---
 
@@ -53,9 +58,16 @@ verify → apply.**
   before the public lists did
 - **Discord alerts** — red at urgency ≥ 85, yellow at ≥ 70 (set
   `DISCORD_WEBHOOK_URL`)
-- **Dashboard** at `/radar`: Apply Now, Found Today, Source-of-Truth Only,
-  and Source Health views; one click opens the full VisaLens eligibility
-  report for any role
+- **Action Queue** (default view at `/radar`): every tracked role classified
+  into apply now / verify first / ask DSO first / likely blocked / watch /
+  low priority — deterministic, with reasons and next steps per role, plus an
+  estimated-review-time-saved impact strip
+- **Dashboard** at `/radar`: Action Queue, Apply Now, Found Today,
+  Source-of-Truth Only, and Source Health views; one click opens the full
+  VisaLens eligibility report for any role
+- **Case workspace** at `/case`: paste the organizer/advisor reply and the
+  case updates — score before → after, resolved and remaining blockers,
+  updated recommendation and report
 
 No LinkedIn/Indeed/Handshake scraping, no login-gated scraping, no CAPTCHA
 bypassing — only public, unauthenticated, structured endpoints.

@@ -81,7 +81,7 @@ export default function RiskScoreCard({ risk }: Props) {
         {risk.summary}
       </p>
 
-      {/* Why this score */}
+      {/* Why this score — auditable point trail when available */}
       <div className="mb-6">
         <p
           className="text-[11px] uppercase tracking-widest mb-3"
@@ -89,17 +89,67 @@ export default function RiskScoreCard({ risk }: Props) {
         >
           Why this score
         </p>
-        <ul className="space-y-2">
-          {risk.reasons.map((reason, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: "#7a7f99" }}>
-              <span
-                className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-                style={{ background: color }}
-              />
-              {reason}
-            </li>
-          ))}
-        </ul>
+        {risk.score_breakdown && risk.score_breakdown.length > 0 ? (
+          <div className="space-y-2.5">
+            {risk.score_breakdown.map((item, i) => {
+              const positive = item.points >= 0;
+              const pointColor = positive ? "#ef4343" : "#22c55e";
+              return (
+                <div key={i} className="flex items-start gap-3">
+                  <span
+                    className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-md tabular-nums"
+                    style={{
+                      color: pointColor,
+                      background: `${pointColor}14`,
+                      border: `1px solid ${pointColor}30`,
+                      fontFamily: "var(--font-mono)",
+                      minWidth: "44px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {positive ? "+" : ""}
+                    {item.points}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm leading-snug" style={{ color: "#e4e6f0" }}>
+                      {item.label}
+                    </p>
+                    {item.evidence && (
+                      <p
+                        className="text-xs mt-0.5 leading-relaxed"
+                        style={{ color: "#7a7f99", fontFamily: "var(--font-mono)" }}
+                      >
+                        &ldquo;{item.evidence}&rdquo;
+                        {item.confidence != null && (
+                          <span style={{ color: "#484d66" }}>
+                            {" "}
+                            · {Math.round(item.confidence * 100)}% confidence
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <p className="text-[10px] pt-1" style={{ color: "#484d66" }}>
+              Deterministic rules — the AI extracts evidence, the score itself is
+              rule-based and clamped to 0–100.
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {risk.reasons.map((reason, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: "#7a7f99" }}>
+                <span
+                  className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
+                  style={{ background: color }}
+                />
+                {reason}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Category breakdown */}

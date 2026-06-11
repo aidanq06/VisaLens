@@ -49,9 +49,9 @@ export const mockAnalysis: VisaLensAnalysis = {
   },
 
   risk: {
-    score: 78,
-    level: "medium_high",
-    main_label: "Unclear — verify before applying",
+    score: 100,
+    level: "high",
+    main_label: "High risk — do not assume eligibility",
     summary:
       "This opportunity may be possible for F-1 students, but the paid role combined with explicit work authorization language makes eligibility uncertain. You should not assume you're eligible without written confirmation.",
     categories: {
@@ -101,6 +101,34 @@ export const mockAnalysis: VisaLensAnalysis = {
       'Work authorization language: "eligible to work in the United States"',
       "International eligibility not explicitly stated",
       "Deadline is close — verification timeline is tight",
+    ],
+    score_breakdown: [
+      {
+        points: 45,
+        label: "Work authorization language detected",
+        evidence: "Applicants must be eligible to work in the United States.",
+        confidence: 0.97,
+      },
+      {
+        points: 25,
+        label: "Paid role detected",
+        evidence:
+          "Paid summer AI internship for undergraduate students enrolled at U.S. universities.",
+        confidence: 0.95,
+      },
+      {
+        points: 20,
+        label: "Paid role combined with work authorization language",
+        evidence: null,
+        confidence: null,
+      },
+      {
+        points: 20,
+        label: "International eligibility not clearly stated",
+        evidence:
+          "No explicit F-1/J-1 or international eligibility language found in the listing",
+        confidence: null,
+      },
     ],
   },
 

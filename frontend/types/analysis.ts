@@ -13,6 +13,28 @@ export type RiskCategory = {
   explanation: string;
 };
 
+/** One auditable line in the deterministic scoring trail. */
+export type ScoreBreakdownItem = {
+  points: number;
+  label: string;
+  evidence: string | null;
+  confidence: number | null;
+};
+
+/** What changed after an organizer/advisor clarification was analyzed. */
+export type CaseDiff = {
+  score_before: number | null;
+  score_after: number;
+  level_before: RiskLevel | null;
+  level_after: RiskLevel;
+  resolved_blockers: string[];
+  remaining_blockers: string[];
+  case_status: string;
+  new_recommendation: string;
+  change_summary: string[];
+  signals_detected: Record<string, unknown>;
+};
+
 export type GraphNodeStatus = "clear" | "warning" | "blocked" | "pending";
 
 export type GraphNode = {
@@ -63,6 +85,8 @@ export type VisaLensAnalysis = {
       timeline: RiskCategory;
     };
     reasons: string[];
+    /** Point-by-point auditable scoring trail (newer analyses only). */
+    score_breakdown?: ScoreBreakdownItem[];
   };
 
   graph: {
