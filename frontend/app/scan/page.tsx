@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { StudentContext } from "@/types/analysis";
 import { sampleOpportunities } from "@/data/mockAnalysis";
 import { analyzeOpportunity, storeAnalysis } from "@/lib/api";
 import { getUser, saveScan } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import ProfileMenu from "@/components/ui/ProfileMenu";
 
 const STATUS_OPTIONS: { value: StudentContext["status"]; label: string }[] = [
@@ -89,6 +90,34 @@ export default function ScanPage() {
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = text.trim().length > 30;
+
+  // Pre-fill visa status and school level from the saved profile, silently.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const user = await getUser();
+        if (!user || cancelled) return;
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        if (!data || cancelled) return;
+        if (STATUS_OPTIONS.some((o) => o.value === data.visa_status)) {
+          setStatus(data.visa_status);
+        }
+        if (LEVEL_OPTIONS.some((o) => o.value === data.school_level)) {
+          setSchoolLevel(data.school_level);
+        }
+      } catch {
+        // Not logged in or no profile — keep defaults.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function loadSample(id: string) {
     const opp = sampleOpportunities.find((s) => s.id === id);

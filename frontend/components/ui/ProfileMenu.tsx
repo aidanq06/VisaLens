@@ -347,6 +347,16 @@ export default function ProfileMenu() {
                     <p style={{ fontSize: "14px", color: "#e4e6f0" }}>
                       Check your email to confirm your account
                     </p>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#7a7f99",
+                        marginTop: "8px",
+                      }}
+                    >
+                      Once confirmed, visit your dashboard to complete your
+                      profile.
+                    </p>
                   </div>
                 ) : (
                   <form onSubmit={handleSignUp}>

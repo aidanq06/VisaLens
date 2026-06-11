@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import type { RiskLevel, VisaLensAnalysis } from "@/types/analysis";
-import { getUser, getUserScans, type SavedScan } from "@/lib/auth";
+import { getUser, getUserScans, saveProfile, type SavedScan } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import ProfileMenu from "@/components/ui/ProfileMenu";
 
 const RISK_COLORS: Record<RiskLevel, { bg: string; text: string }> = {
@@ -21,6 +22,20 @@ const RISK_LABELS: Record<RiskLevel, string> = {
   moderate: "Moderate Risk",
   low: "Low Risk",
 };
+
+const VISA_OPTIONS = [
+  { value: "F-1", label: "F-1 Student Visa" },
+  { value: "J-1", label: "J-1 Exchange Visitor" },
+  { value: "international_other", label: "Other International" },
+  { value: "domestic", label: "Domestic Student" },
+  { value: "unsure", label: "Not Sure" },
+];
+
+const LEVEL_OPTIONS = [
+  { value: "high_school", label: "High School" },
+  { value: "college", label: "College / Undergraduate" },
+  { value: "graduate", label: "Graduate" },
+];
 
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: "11px",
@@ -212,6 +227,13 @@ export default function DashboardPage() {
   const [scans, setScans] = useState<SavedScan[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [visaStatus, setVisaStatus] = useState("F-1");
+  const [schoolLevel, setSchoolLevel] = useState("college");
+  const [schoolName, setSchoolName] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -222,15 +244,38 @@ export default function DashboardPage() {
         return;
       }
       setUser(u);
-      const { data } = await getUserScans(u.id);
+      const [{ data }, { data: profile }] = await Promise.all([
+        getUserScans(u.id),
+        supabase.from("profiles").select("*").eq("id", u.id).single(),
+      ]);
       if (cancelled) return;
       setScans(data ?? []);
+      if (profile) {
+        if (profile.visa_status) setVisaStatus(profile.visa_status);
+        if (profile.school_level) setSchoolLevel(profile.school_level);
+        if (profile.school_name) setSchoolName(profile.school_name);
+      }
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [router]);
+
+  async function handleSaveProfile() {
+    if (!user?.email) return;
+    setSavingProfile(true);
+    setProfileMessage(null);
+    const { error } = await saveProfile(user.id, {
+      visa_status: visaStatus,
+      school_level: schoolLevel,
+      school_name: schoolName.trim() || undefined,
+      email: user.email,
+    });
+    setSavingProfile(false);
+    setProfileMessage(error ? "Could not save profile" : "Profile saved");
+    setTimeout(() => setProfileMessage(null), 3000);
+  }
 
   if (loading || !user) {
     return (
@@ -400,6 +445,164 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* Profile settings */}
+        <section style={{ marginBottom: "56px" }}>
+          <button
+            onClick={() => setProfileOpen((o) => !o)}
+            style={{
+              ...sectionTitleStyle,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            <span style={{ fontSize: "9px" }}>{profileOpen ? "▼" : "▶"}</span>
+            Your Profile
+          </button>
+          {profileOpen && (
+            <div
+              style={{
+                background: "#0f1018",
+                border: "1px solid #252838",
+                borderRadius: "12px",
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "20px",
+              }}
+            >
+              {[
+                {
+                  label: "Visa / status",
+                  options: VISA_OPTIONS,
+                  value: visaStatus,
+                  onChange: setVisaStatus,
+                },
+                {
+                  label: "School level",
+                  options: LEVEL_OPTIONS,
+                  value: schoolLevel,
+                  onChange: setSchoolLevel,
+                },
+              ].map(({ label, options, value, onChange }) => (
+                <div key={label}>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.12em",
+                      color: "#484d66",
+                      fontFamily: "var(--font-mono)",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    {label}
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {options.map((opt) => {
+                      const active = opt.value === value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => onChange(opt.value)}
+                          style={{
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            color: active ? "#f5a623" : "#7a7f99",
+                            background: active
+                              ? "rgba(245,166,35,0.1)"
+                              : "#161823",
+                            border: `1px solid ${
+                              active ? "rgba(245,166,35,0.35)" : "#252838"
+                            }`,
+                            fontFamily: "var(--font-mono)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              <div>
+                <p
+                  style={{
+                    fontSize: "11px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.12em",
+                    color: "#484d66",
+                    fontFamily: "var(--font-mono)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  School name{" "}
+                  <span style={{ textTransform: "none", letterSpacing: 0 }}>
+                    (optional)
+                  </span>
+                </p>
+                <input
+                  type="text"
+                  placeholder="e.g. University of Washington"
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    maxWidth: "400px",
+                    background: "#080910",
+                    border: "1px solid #252838",
+                    borderRadius: "10px",
+                    padding: "10px 14px",
+                    fontSize: "13px",
+                    color: "#e4e6f0",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                  style={{
+                    padding: "10px 24px",
+                    borderRadius: "10px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    background: savingProfile ? "#1e2130" : "#f5a623",
+                    color: savingProfile ? "#484d66" : "#080910",
+                    border: "none",
+                    cursor: savingProfile ? "wait" : "pointer",
+                  }}
+                >
+                  {savingProfile ? "Saving…" : "Save Profile"}
+                </button>
+                {profileMessage && (
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color:
+                        profileMessage === "Profile saved"
+                          ? "#22c55e"
+                          : "#ef9a9a",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    {profileMessage}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Saved scans */}
         <section style={{ marginBottom: "56px" }}>
