@@ -3,7 +3,12 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, signUp } from "@/lib/auth";
+import { saveProfile, signIn, signUp, type ProfileInput } from "@/lib/auth";
+import { SCHOOLS } from "@/data/schools";
+
+/** Profile data captured at signup that couldn't be written yet (no session
+ *  until the email is confirmed) — applied on first sign-in. */
+const PENDING_PROFILE_KEY = "visalens:pending-profile";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -40,6 +45,110 @@ function submitButtonStyle(loading: boolean): React.CSSProperties {
   };
 }
 
+function SchoolSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (school: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [hoverIdx, setHoverIdx] = useState(-1);
+
+  const filtered = SCHOOLS.filter((s) =>
+    s.toLowerCase().includes(query.trim().toLowerCase())
+  );
+
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        type="text"
+        required
+        placeholder="Search for your school…"
+        value={open ? query : value}
+        onFocus={() => {
+          setOpen(true);
+          setQuery("");
+          setHoverIdx(-1);
+        }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setHoverIdx(-1);
+        }}
+        style={inputStyle}
+      />
+      {open && (
+        <>
+          {/* Click-away catcher */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 90 }}
+          />
+          <ul
+            style={{
+              position: "absolute",
+              top: "calc(100% + 6px)",
+              left: 0,
+              right: 0,
+              zIndex: 95,
+              maxHeight: "200px",
+              overflowY: "auto",
+              background: "#0f1018",
+              border: "1px solid #252838",
+              borderRadius: "10px",
+              padding: "4px",
+              margin: 0,
+              listStyle: "none",
+            }}
+          >
+            {filtered.length === 0 ? (
+              <li
+                style={{
+                  padding: "10px 12px",
+                  fontSize: "12px",
+                  color: "#7a7f99",
+                }}
+              >
+                No matching schools found
+              </li>
+            ) : (
+              filtered.map((school, i) => (
+                <li key={school}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(school);
+                      setOpen(false);
+                    }}
+                    onMouseEnter={() => setHoverIdx(i)}
+                    onMouseLeave={() => setHoverIdx(-1)}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      border: "none",
+                      cursor: "pointer",
+                      color: school === value ? "#f5a623" : "#e4e6f0",
+                      background:
+                        hoverIdx === i ? "rgba(245,166,35,0.1)" : "transparent",
+                    }}
+                  >
+                    {school}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
 function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,6 +156,10 @@ function AuthContent() {
     searchParams.get("mode") === "signup" ? "signup" : "signin";
 
   const [tab, setTab] = useState<"signin" | "signup">(initialTab);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dob, setDob] = useState("");
+  const [school, setSchool] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -64,11 +177,25 @@ function AuthContent() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await signIn(email, password);
-    setLoading(false);
+    const { data, error } = await signIn(email, password);
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
+    }
+    // Apply profile data captured at signup, if it couldn't be saved then.
+    try {
+      const raw = localStorage.getItem(PENDING_PROFILE_KEY);
+      if (raw && data.user) {
+        const pending = JSON.parse(raw) as ProfileInput;
+        const { error: profileError } = await saveProfile(
+          data.user.id,
+          pending
+        );
+        if (!profileError) localStorage.removeItem(PENDING_PROFILE_KEY);
+      }
+    } catch {
+      // Never block sign-in on profile bookkeeping.
     }
     router.push("/dashboard");
   }
@@ -76,17 +203,45 @@ function AuthContent() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!school) {
+      setError("Please select your school from the list.");
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords do not match.");
       return;
     }
     setLoading(true);
-    const { error } = await signUp(email, password);
-    setLoading(false);
+    const { data, error } = await signUp(email, password);
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
+
+    const profile: ProfileInput = {
+      email,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      dob,
+      school_name: school,
+    };
+    // Without a session (email confirmation pending) RLS blocks this write,
+    // so stash the profile locally and apply it on first sign-in instead.
+    let saved = false;
+    if (data.user) {
+      const { error: profileError } = await saveProfile(data.user.id, profile);
+      saved = !profileError;
+    }
+    if (!saved) {
+      try {
+        localStorage.setItem(PENDING_PROFILE_KEY, JSON.stringify(profile));
+      } catch {
+        // Storage unavailable — profile can be completed from the dashboard.
+      }
+    }
+
+    setLoading(false);
     setSignedUp(true);
   }
 
@@ -228,6 +383,49 @@ function AuthContent() {
             </div>
           ) : (
             <form onSubmit={handleSignUp}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                  marginBottom: "16px",
+                }}
+              >
+                <div>
+                  <label style={labelStyle}>First Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Last Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={labelStyle}>Date of Birth</label>
+                <input
+                  type="date"
+                  required
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  style={{ ...inputStyle, colorScheme: "dark" }}
+                />
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={labelStyle}>School</label>
+                <SchoolSelect value={school} onChange={setSchool} />
+              </div>
               <div style={{ marginBottom: "16px" }}>
                 <label style={labelStyle}>Email</label>
                 <input
