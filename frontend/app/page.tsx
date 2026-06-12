@@ -1,164 +1,729 @@
 import Link from "next/link";
-import { sampleOpportunities } from "@/data/mockAnalysis";
 import ProfileMenu from "@/components/ui/ProfileMenu";
-import AnalyzeLink from "@/components/ui/AnalyzeLink";
+import LandingAnimations from "@/components/ui/LandingAnimations";
+
+const flowSteps = [
+  {
+    title: "Paste any opportunity description",
+    description: "Internship, fellowship, scholarship, or research program",
+  },
+  {
+    title: "VisaLens extracts eligibility requirements",
+    description: "Citizenship rules, work authorization, funding restrictions",
+  },
+  {
+    title: "Get your risk score and action plan",
+    description: "A structured timeline of every step to verify and accept the role",
+  },
+];
+
+const stepCards = [
+  {
+    number: "01",
+    title: "Find",
+    description:
+      "VisaLens Radar scans company career pages and surfaces fresh opportunities matched to your field.",
+  },
+  {
+    number: "02",
+    title: "Analyze",
+    description:
+      "Paste any opportunity. VisaLens extracts hidden eligibility requirements and scores your risk across 7 categories.",
+  },
+  {
+    number: "03",
+    title: "Act",
+    description:
+      "Get a structured verification timeline with every step assigned to you, your DSO, or the organizer.",
+  },
+];
+
+const detectionCategories = [
+  {
+    dot: "#dc2626",
+    name: "Citizenship Restrictions",
+    description: "U.S. citizens or permanent residents only",
+  },
+  {
+    dot: "#f5a623",
+    name: "Work Authorization",
+    description: "Must be eligible to work in the U.S.",
+  },
+  {
+    dot: "#f5a623",
+    name: "Funding Restrictions",
+    description: "Federal or citizenship-based funding",
+  },
+  {
+    dot: "#ca8a04",
+    name: "Location Requirements",
+    description: "Remote but must be located in the U.S.",
+  },
+  {
+    dot: "#16a34a",
+    name: "International Friendly",
+    description: "Open worldwide, no work auth required",
+  },
+  {
+    dot: "#adadad",
+    name: "Ambiguous Language",
+    description: "Phrases that require human verification",
+  },
+];
 
 export default function Home() {
   return (
-    <div style={{ background: "#080910", minHeight: "100vh", color: "#e4e6f0" }}>
-      {/* Radial glow */}
-      <div
-        style={{
-          position: "fixed",
-          top: "-20%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "800px",
-          height: "500px",
-          background: "radial-gradient(ellipse, rgba(245,166,35,0.07) 0%, transparent 70%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
+    <>
+      <style>{`
+        html {
+          background: #ffffff;
+        }
 
-      {/* Nav */}
-      <nav
-        style={{ borderBottom: "1px solid #1a1d2a", position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 32px" }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "28px", height: "28px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(245,166,35,0.15)", border: "1px solid rgba(245,166,35,0.3)" }}>
-            <span style={{ color: "#f5a623", fontSize: "14px" }}>◈</span>
+        .lp {
+          background: #ffffff;
+          color: #0f0f0f;
+          min-height: 100vh;
+          font-family: var(--font-sans);
+        }
+
+        /* ── Scroll reveal ───────────────────────────────────── */
+        .fade-section {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        .fade-section.fade-in {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fade-section {
+            opacity: 1;
+            transform: none;
+            transition: none;
+          }
+        }
+
+        /* ── Nav ─────────────────────────────────────────────── */
+        .lp-nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 50;
+          height: 56px;
+          padding: 0 32px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #ffffff;
+          border-bottom: 1px solid #e8e8e4;
+        }
+        .lp-brand {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          text-decoration: none;
+        }
+        .lp-brand-icon {
+          color: #f5a623;
+          font-size: 13px;
+          line-height: 1;
+        }
+        .lp-brand-name {
+          font-family: var(--font-serif);
+          font-size: 15px;
+          font-weight: 500;
+          color: #0f0f0f;
+        }
+        .lp-nav-links {
+          display: flex;
+          align-items: center;
+          gap: 32px;
+        }
+        .lp-nav-link {
+          font-size: 13px;
+          color: #6b6b6b;
+          text-decoration: none;
+          transition: color 0.15s ease;
+        }
+        .lp-nav-link:hover {
+          color: #0f0f0f;
+        }
+
+        /* ── Buttons ─────────────────────────────────────────── */
+        .lp-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 14px 28px;
+          border-radius: 8px;
+          background: #f5a623;
+          color: #0f0f0f;
+          font-size: 14px;
+          font-weight: 600;
+          text-decoration: none;
+          transition: background 0.15s ease;
+        }
+        .lp-btn-primary:hover {
+          background: #d4890f;
+        }
+        .lp-btn-secondary {
+          display: inline-flex;
+          align-items: center;
+          padding: 14px 28px;
+          border-radius: 8px;
+          background: transparent;
+          border: 1px solid #e8e8e4;
+          color: #6b6b6b;
+          font-size: 14px;
+          text-decoration: none;
+          transition: border-color 0.15s ease;
+        }
+        .lp-btn-secondary:hover {
+          border-color: #adadad;
+        }
+
+        /* ── Hero ────────────────────────────────────────────── */
+        .lp-hero {
+          min-height: 100vh;
+          padding: 56px 32px 0;
+          max-width: 1200px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 11fr 9fr;
+          gap: 64px;
+          align-items: center;
+        }
+        .lp-eyebrow {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #adadad;
+          margin: 0;
+        }
+        .lp-headline {
+          font-family: var(--font-serif);
+          font-size: 64px;
+          font-weight: 400;
+          line-height: 1.05;
+          color: #0f0f0f;
+          margin: 16px 0 0;
+        }
+        .lp-headline em {
+          color: #f5a623;
+          font-style: italic;
+        }
+        .lp-subhead {
+          font-size: 17px;
+          line-height: 1.65;
+          color: #6b6b6b;
+          max-width: 420px;
+          margin: 24px 0 0;
+        }
+        .lp-cta-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 40px;
+        }
+
+        /* ── Hero flow card ──────────────────────────────────── */
+        .lp-flow {
+          background: #f8f8f6;
+          border: 1px solid #e8e8e4;
+          border-radius: 16px;
+          padding: 32px;
+          max-width: 420px;
+          justify-self: end;
+          width: 100%;
+        }
+        .lp-flow-title {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #adadad;
+          margin: 0 0 24px;
+        }
+        .lp-flow-step {
+          display: flex;
+          gap: 16px;
+        }
+        .lp-flow-rail {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          flex-shrink: 0;
+        }
+        .lp-flow-circle {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1px solid #e8e8e4;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          color: #adadad;
+        }
+        .lp-flow-line {
+          width: 1px;
+          flex: 1;
+          min-height: 24px;
+          background: #e8e8e4;
+        }
+        .lp-flow-text {
+          padding-bottom: 24px;
+        }
+        .lp-flow-step:last-of-type .lp-flow-text {
+          padding-bottom: 0;
+        }
+        .lp-flow-step-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #0f0f0f;
+          margin: 0;
+        }
+        .lp-flow-step-desc {
+          font-size: 13px;
+          color: #6b6b6b;
+          margin: 2px 0 0;
+        }
+        .lp-flow-separator {
+          height: 1px;
+          background: #e8e8e4;
+          margin: 24px 0;
+        }
+        .lp-flow-result {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .lp-flow-result-label {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #adadad;
+        }
+        .lp-flow-badge {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #dc2626;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 4px;
+          padding: 2px 8px;
+        }
+        .lp-flow-result-text {
+          font-size: 13px;
+          color: #6b6b6b;
+          margin: 8px 0 0;
+        }
+
+        /* ── Sections ────────────────────────────────────────── */
+        .lp-section {
+          padding: 120px 32px;
+          scroll-margin-top: 56px;
+        }
+        .lp-section-surface {
+          background: #f8f8f6;
+        }
+        .lp-section-inner {
+          max-width: 1080px;
+          margin: 0 auto;
+        }
+        .lp-section-label {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #adadad;
+          margin: 0;
+        }
+        .lp-section-heading {
+          font-family: var(--font-serif);
+          font-size: 42px;
+          font-weight: 400;
+          line-height: 1.16;
+          color: #0f0f0f;
+          margin: 16px 0 0;
+        }
+
+        /* ── How it works cards ──────────────────────────────── */
+        .lp-cards {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 24px;
+          margin-top: 64px;
+        }
+        .lp-card {
+          background: #ffffff;
+          border: 1px solid #e8e8e4;
+          border-radius: 12px;
+          padding: 32px;
+        }
+        .lp-card-number {
+          font-family: var(--font-mono);
+          font-size: 12px;
+          color: #adadad;
+        }
+        .lp-card-title {
+          font-family: var(--font-serif);
+          font-size: 20px;
+          font-weight: 400;
+          color: #0f0f0f;
+          margin: 16px 0 0;
+        }
+        .lp-card-desc {
+          font-size: 14px;
+          line-height: 1.65;
+          color: #6b6b6b;
+          margin: 12px 0 0;
+        }
+
+        /* ── Detection ───────────────────────────────────────── */
+        .lp-detect {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 80px;
+          margin-top: 64px;
+        }
+        .lp-detect-intro {
+          font-size: 16px;
+          line-height: 1.7;
+          color: #6b6b6b;
+          max-width: 400px;
+          margin: 0;
+        }
+        .lp-detect-intro + .lp-detect-intro {
+          margin-top: 24px;
+        }
+        .lp-detect-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        .lp-detect-item {
+          display: flex;
+          align-items: baseline;
+          gap: 12px;
+          padding: 14px 0;
+          border-bottom: 1px solid #e8e8e4;
+        }
+        .lp-detect-item:first-child {
+          padding-top: 0;
+        }
+        .lp-detect-dot {
+          flex-shrink: 0;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          transform: translateY(-1px);
+        }
+        .lp-detect-name {
+          flex-shrink: 0;
+          width: 176px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #0f0f0f;
+        }
+        .lp-detect-desc {
+          font-size: 13px;
+          color: #6b6b6b;
+        }
+
+        /* ── CTA ─────────────────────────────────────────────── */
+        .lp-cta {
+          background: #0f0f0f;
+          padding: 120px 32px;
+        }
+        .lp-cta-inner {
+          max-width: 600px;
+          margin: 0 auto;
+          text-align: center;
+        }
+        .lp-cta-heading {
+          font-family: var(--font-serif);
+          font-size: 48px;
+          font-weight: 400;
+          line-height: 1.1;
+          color: #ffffff;
+          margin: 0;
+        }
+        .lp-cta-body {
+          font-size: 17px;
+          line-height: 1.6;
+          color: #6b6b6b;
+          margin: 16px 0 0;
+        }
+        .lp-cta-action {
+          margin-top: 40px;
+        }
+
+        /* ── Footer ──────────────────────────────────────────── */
+        .lp-footer {
+          background: #ffffff;
+          border-top: 1px solid #e8e8e4;
+          padding: 40px 32px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+        }
+        .lp-footer-name {
+          font-family: var(--font-serif);
+          font-size: 14px;
+          color: #0f0f0f;
+          margin: 0;
+        }
+        .lp-footer-tagline {
+          font-size: 13px;
+          color: #adadad;
+          margin: 8px 0 0;
+        }
+        .lp-footer-credit {
+          font-family: var(--font-mono);
+          font-size: 12px;
+          color: #adadad;
+          margin: 0;
+        }
+
+        /* ── Mobile ──────────────────────────────────────────── */
+        @media (max-width: 768px) {
+          .lp-nav {
+            padding: 0 24px;
+          }
+          .lp-nav-links {
+            gap: 16px;
+          }
+          .lp-hero {
+            grid-template-columns: 1fr;
+            gap: 48px;
+            min-height: 0;
+            padding: 120px 24px 64px;
+          }
+          .lp-headline {
+            font-size: 40px;
+          }
+          .lp-flow {
+            justify-self: start;
+          }
+          .lp-section {
+            padding: 80px 24px;
+          }
+          .lp-section-heading {
+            font-size: 32px;
+          }
+          .lp-cards {
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 48px;
+          }
+          .lp-detect {
+            grid-template-columns: 1fr;
+            gap: 40px;
+            margin-top: 48px;
+          }
+          .lp-detect-item {
+            flex-wrap: wrap;
+          }
+          .lp-detect-name {
+            width: auto;
+          }
+          .lp-detect-desc {
+            width: 100%;
+            padding-left: 16px;
+          }
+          .lp-cta {
+            padding: 80px 24px;
+          }
+          .lp-cta-heading {
+            font-size: 36px;
+          }
+          .lp-footer {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 40px 24px;
+          }
+        }
+      `}</style>
+
+      <LandingAnimations />
+
+      <div className="lp">
+        {/* ── Nav ─────────────────────────────────────────────── */}
+        <nav className="lp-nav">
+          <Link href="/" className="lp-brand">
+            <span className="lp-brand-icon" aria-hidden="true">
+              ◈
+            </span>
+            <span className="lp-brand-name">VisaLens</span>
+          </Link>
+          <div className="lp-nav-links">
+            <a href="#how-it-works" className="lp-nav-link">
+              How it works
+            </a>
+            <Link href="/radar" className="lp-nav-link">
+              Radar
+            </Link>
+            <ProfileMenu />
           </div>
-          <span style={{ fontWeight: "500", letterSpacing: "-0.01em", fontSize: "14px", color: "#e4e6f0" }}>VisaLens</span>
-          <span style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "4px", color: "#f5a623", background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.2)", fontFamily: "var(--font-mono)" }}>AI</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-          <span style={{ fontSize: "12px", color: "#7a7f99", fontFamily: "var(--font-mono)" }}>Risk Engine for International Students</span>
-          <Link href="/radar" style={{ fontSize: "12px", color: "#7a7f99", textDecoration: "none", fontFamily: "var(--font-mono)" }}>
-            Radar
-          </Link>
-          <AnalyzeLink />
-          <ProfileMenu />
-        </div>
-      </nav>
+        </nav>
 
-      {/* Hero */}
-      <section style={{ position: "relative", zIndex: 10, paddingTop: "96px", paddingBottom: "80px", textAlign: "center", maxWidth: "896px", margin: "0 auto", padding: "96px 24px 80px" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 12px", borderRadius: "999px", color: "#f5a623", background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)", fontFamily: "var(--font-mono)", fontSize: "12px", marginBottom: "32px" }}>
-          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#f5a623" }} />
-          AI-powered eligibility risk analysis
-        </div>
-
-        <h1 style={{ fontFamily: "var(--font-serif)", fontSize: "clamp(48px, 8vw, 80px)", lineHeight: "1.06", color: "#e4e6f0", marginBottom: "24px" }}>
-          Don&apos;t lose the
-          <br />
-          <em style={{ color: "#f5a623" }}>opportunity</em>
-          <br />
-          after finding it.
-        </h1>
-
-        <p style={{ fontSize: "18px", lineHeight: "1.7", maxWidth: "620px", margin: "0 auto 40px", color: "#7a7f99" }}>
-          One workflow for international students: the Radar discovers fresh
-          internships straight from company career feeds, VisaLens scores your
-          eligibility risk on each one, the Action Queue tells you what to do
-          first today — and when the organizer replies, your case updates with
-          the blockers resolved.
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "row", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/radar" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "14px 28px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", background: "#f5a623", color: "#080910", textDecoration: "none" }}>
-            Find Internships <span>→</span>
-          </Link>
-          <Link href="/scan" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "14px 28px", borderRadius: "12px", fontSize: "15px", fontWeight: "600", color: "#f5a623", background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.3)", textDecoration: "none" }}>
-            Analyze an Opportunity
-          </Link>
-          <Link href="/results?demo=true" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "14px 28px", borderRadius: "12px", fontSize: "15px", color: "#7a7f99", background: "#0f1018", border: "1px solid #252838", textDecoration: "none" }}>
-            See demo results
-          </Link>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section style={{ position: "relative", zIndex: 10, padding: "0 24px 80px", maxWidth: "1024px", margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1px", borderRadius: "16px", overflow: "hidden", background: "#252838" }}>
-          {[
-            { step: "01", title: "Radar finds roles early", desc: "Company career feeds are monitored directly, so internships surface here before public job boards — each scored for fit and urgency.", icon: "◉" },
-            { step: "02", title: "AI extracts, rules decide", desc: 'Phrases like "eligible to work in the U.S." are extracted as evidence; a deterministic rule engine scores the risk — every point auditable.', icon: "◎" },
-            { step: "03", title: "Action Queue ranks your day", desc: "Every role is classified: apply now, verify first, ask your DSO, or likely blocked — with the reasons and next steps spelled out.", icon: "◈" },
-            { step: "04", title: "Verify, update, decide", desc: "Send the generated organizer email, paste the reply, and watch the case update: blockers resolved, score recalculated, decision clearer.", icon: "✓" },
-          ].map(({ step, title, desc, icon }) => (
-            <div key={step} style={{ padding: "32px 28px", background: "#0f1018" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-                <span style={{ fontSize: "20px", color: "#f5a623" }}>{icon}</span>
-                <span style={{ fontSize: "11px", color: "#484d66", fontFamily: "var(--font-mono)" }}>{step}</span>
-              </div>
-              <h3 style={{ fontSize: "15px", fontWeight: "500", color: "#e4e6f0", marginBottom: "8px" }}>{title}</h3>
-              <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#7a7f99" }}>{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Risk signals */}
-      <section style={{ position: "relative", zIndex: 10, padding: "0 24px 80px", maxWidth: "1024px", margin: "0 auto" }}>
-        <div style={{ marginBottom: "24px" }}>
-          <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.12em", color: "#484d66", fontFamily: "var(--font-mono)", marginBottom: "4px" }}>Risk Signals</p>
-          <h2 style={{ fontSize: "20px", fontWeight: "500", color: "#e4e6f0" }}>What VisaLens detects</h2>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
-          {[
-            { phrase: '"Must be eligible to work in the U.S."', risk: "high", label: "Work authorization required" },
-            { phrase: '"U.S. citizens or permanent residents only"', risk: "high", label: "Citizenship restriction" },
-            { phrase: '"Paid internship"', risk: "medium_high", label: "Paid role — work auth may apply" },
-            { phrase: '"NSF-funded"', risk: "medium_high", label: "Federal funding restriction" },
-            { phrase: '"Open worldwide"', risk: "low", label: "International students welcome" },
-            { phrase: '"No work authorization required"', risk: "low", label: "Explicitly eligible" },
-          ].map(({ phrase, risk, label }) => {
-            const c = risk === "high" ? "#ef4343" : risk === "medium_high" ? "#f5a623" : "#2ecc71";
-            return (
-              <div key={phrase} style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "14px 16px", borderRadius: "12px", background: "#0f1018", border: "1px solid #1e2130" }}>
-                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: c, boxShadow: `0 0 5px ${c}70`, flexShrink: 0, marginTop: "6px" }} />
-                <div>
-                  <p style={{ fontSize: "12px", color: c, fontFamily: "var(--font-mono)", marginBottom: "2px" }}>{phrase}</p>
-                  <p style={{ fontSize: "12px", color: "#7a7f99" }}>{label}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Sample opportunities */}
-      <section style={{ position: "relative", zIndex: 10, padding: "0 24px 80px", maxWidth: "1024px", margin: "0 auto" }}>
-        <div style={{ marginBottom: "24px" }}>
-          <p style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.12em", color: "#484d66", fontFamily: "var(--font-mono)", marginBottom: "4px" }}>Demo Cases</p>
-          <h2 style={{ fontSize: "20px", fontWeight: "500", color: "#e4e6f0" }}>See VisaLens in action</h2>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
-          {sampleOpportunities.map((opp) => {
-            const c = opp.category === "internship" ? "#f5a623" : opp.category === "research" ? "#ef4343" : "#2ecc71";
-            return (
-              <Link key={opp.id} href="/results?demo=true" style={{ padding: "16px", borderRadius: "12px", display: "block", background: "#0f1018", border: "1px solid #252838", textDecoration: "none" }}>
-                <div style={{ marginBottom: "12px" }}>
-                  <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "999px", color: c, background: `${c}15`, border: `1px solid ${c}30`, fontFamily: "var(--font-mono)", textTransform: "capitalize" }}>{opp.category}</span>
-                </div>
-                <h3 style={{ fontSize: "13px", fontWeight: "500", color: "#e4e6f0", marginBottom: "8px" }}>{opp.title}</h3>
-                <p style={{ fontSize: "12px", lineHeight: "1.5", color: "#7a7f99", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.text}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "12px" }}>
-                  {opp.tags.map((tag) => (
-                    <span key={tag} style={{ fontSize: "10px", padding: "2px 6px", borderRadius: "4px", color: "#484d66", background: "#161823", fontFamily: "var(--font-mono)" }}>{tag}</span>
-                  ))}
-                </div>
+        {/* ── Hero ────────────────────────────────────────────── */}
+        <section className="lp-hero">
+          <div>
+            <p className="lp-eyebrow">Eligibility Workflow Engine</p>
+            <h1 className="lp-headline">
+              Don&apos;t lose the
+              <br />
+              <em>opportunity</em>
+              <br />
+              after finding it.
+            </h1>
+            <p className="lp-subhead">
+              VisaLens finds internships, fellowships, and research programs.
+              It scores your eligibility risk on each one and builds a
+              verification timeline so nothing falls through the cracks.
+            </p>
+            <div className="lp-cta-row">
+              <Link href="/scan" className="lp-btn-primary">
+                Analyze an Opportunity <span aria-hidden="true">→</span>
               </Link>
-            );
-          })}
-        </div>
-      </section>
+              <a href="#how-it-works" className="lp-btn-secondary">
+                See how it works
+              </a>
+            </div>
+          </div>
 
-      {/* Footer */}
-      <footer style={{ position: "relative", zIndex: 10, padding: "28px 24px", textAlign: "center", borderTop: "1px solid #1a1d2a" }}>
-        <p style={{ fontSize: "12px", color: "#484d66" }}>VisaLens AI — For informational purposes only. Not legal or immigration advice.</p>
-      </footer>
-    </div>
+          <div className="lp-flow" aria-label="How VisaLens works, in three steps">
+            <p className="lp-flow-title">How it works</p>
+
+            {flowSteps.map((step, index) => (
+              <div key={step.title} className="lp-flow-step">
+                <div className="lp-flow-rail">
+                  <span className="lp-flow-circle">{index + 1}</span>
+                  {index < flowSteps.length - 1 && (
+                    <span className="lp-flow-line" />
+                  )}
+                </div>
+                <div className="lp-flow-text">
+                  <p className="lp-flow-step-title">{step.title}</p>
+                  <p className="lp-flow-step-desc">{step.description}</p>
+                </div>
+              </div>
+            ))}
+
+            <div className="lp-flow-separator" />
+            <div className="lp-flow-result">
+              <span className="lp-flow-result-label">Sample Result</span>
+              <span className="lp-flow-badge">High Risk</span>
+            </div>
+            <p className="lp-flow-result-text">
+              Citizenship restriction detected. Work authorization required.
+            </p>
+          </div>
+        </section>
+
+        {/* ── How it works ────────────────────────────────────── */}
+        <section
+          id="how-it-works"
+          className="lp-section lp-section-surface fade-section"
+        >
+          <div className="lp-section-inner">
+            <p className="lp-section-label">How It Works</p>
+            <h2 className="lp-section-heading">
+              Three steps from search to start date.
+            </h2>
+            <div className="lp-cards">
+              {stepCards.map((card) => (
+                <div key={card.number} className="lp-card">
+                  <span className="lp-card-number">{card.number}</span>
+                  <h3 className="lp-card-title">{card.title}</h3>
+                  <p className="lp-card-desc">{card.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── What VisaLens detects ───────────────────────────── */}
+        <section className="lp-section fade-section">
+          <div className="lp-section-inner">
+            <p className="lp-section-label">Intelligence Layer</p>
+            <h2 className="lp-section-heading">
+              Built to catch what students miss.
+            </h2>
+            <div className="lp-detect">
+              <div>
+                <p className="lp-detect-intro">
+                  Most eligibility problems are not obvious. They hide in
+                  phrases like must be authorized to work or funding restricted
+                  to U.S. citizens. Language that looks standard but can
+                  disqualify an international student entirely.
+                </p>
+                <p className="lp-detect-intro">
+                  VisaLens is built around a structured extraction engine that
+                  identifies these phrases, maps them to risk categories, and
+                  surfaces them with evidence so you know exactly what you are
+                  dealing with before you apply.
+                </p>
+              </div>
+              <ul className="lp-detect-list">
+                {detectionCategories.map((category) => (
+                  <li key={category.name} className="lp-detect-item">
+                    <span
+                      className="lp-detect-dot"
+                      style={{ background: category.dot }}
+                      aria-hidden="true"
+                    />
+                    <span className="lp-detect-name">{category.name}</span>
+                    <span className="lp-detect-desc">
+                      {category.description}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA ─────────────────────────────────────────────── */}
+        <section className="lp-cta fade-section">
+          <div className="lp-cta-inner">
+            <h2 className="lp-cta-heading">
+              Your next opportunity is waiting.
+            </h2>
+            <p className="lp-cta-body">
+              Analyze it before you apply. Know your risk before you commit.
+            </p>
+            <div className="lp-cta-action">
+              <Link href="/scan" className="lp-btn-primary">
+                Analyze an Opportunity <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Footer ──────────────────────────────────────────── */}
+        <footer className="lp-footer">
+          <div>
+            <p className="lp-footer-name">VisaLens</p>
+            <p className="lp-footer-tagline">
+              Eligibility workflow engine for international students.
+            </p>
+          </div>
+          <p className="lp-footer-credit">Built for STEMINATE HACKS 2026</p>
+        </footer>
+      </div>
+    </>
   );
 }
