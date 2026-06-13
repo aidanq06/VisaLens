@@ -10,41 +10,6 @@ import { SCHOOLS } from "@/data/schools";
  *  until the email is confirmed) — applied on first sign-in. */
 const PENDING_PROFILE_KEY = "visalens:pending-profile";
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  background: "#080910",
-  border: "1px solid #252838",
-  borderRadius: "10px",
-  padding: "11px 14px",
-  fontSize: "13px",
-  color: "#e4e6f0",
-  outline: "none",
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: "11px",
-  textTransform: "uppercase",
-  letterSpacing: "0.12em",
-  color: "#484d66",
-  fontFamily: "var(--font-mono)",
-  marginBottom: "6px",
-  display: "block",
-};
-
-function submitButtonStyle(loading: boolean): React.CSSProperties {
-  return {
-    width: "100%",
-    padding: "13px",
-    borderRadius: "10px",
-    fontSize: "14px",
-    fontWeight: "600",
-    background: loading ? "#1e2130" : "#f5a623",
-    color: loading ? "#484d66" : "#080910",
-    border: "none",
-    cursor: loading ? "wait" : "pointer",
-  };
-}
-
 function SchoolSelect({
   value,
   onChange,
@@ -54,7 +19,6 @@ function SchoolSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [hoverIdx, setHoverIdx] = useState(-1);
 
   const filtered = SCHOOLS.filter((s) =>
     s.toLowerCase().includes(query.trim().toLowerCase())
@@ -65,55 +29,36 @@ function SchoolSelect({
       <input
         type="text"
         required
-        placeholder="Search for your school…"
+        placeholder="Search for your school"
         value={open ? query : value}
         onFocus={() => {
           setOpen(true);
           setQuery("");
-          setHoverIdx(-1);
         }}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setHoverIdx(-1);
-        }}
-        style={inputStyle}
+        onChange={(e) => setQuery(e.target.value)}
+        className="al-input"
+        style={
+          open
+            ? {
+                borderColor: "#D8C7A8",
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+              }
+            : undefined
+        }
       />
       {open && (
         <>
           {/* Click-away catcher */}
           <div
             onClick={() => setOpen(false)}
-            style={{ position: "fixed", inset: 0, zIndex: 90 }}
+            style={{ position: "fixed", inset: 0, zIndex: 19 }}
           />
-          <ul
-            style={{
-              position: "absolute",
-              top: "calc(100% + 6px)",
-              left: 0,
-              right: 0,
-              zIndex: 95,
-              maxHeight: "200px",
-              overflowY: "auto",
-              background: "#0f1018",
-              border: "1px solid #252838",
-              borderRadius: "10px",
-              padding: "4px",
-              margin: 0,
-              listStyle: "none",
-            }}
-          >
+          <ul className="al-dropdown">
             {filtered.length === 0 ? (
-              <li
-                style={{
-                  padding: "10px 12px",
-                  fontSize: "12px",
-                  color: "#7a7f99",
-                }}
-              >
-                No matching schools found
-              </li>
+              <li className="al-dropdown-empty">No matching schools found</li>
             ) : (
-              filtered.map((school, i) => (
+              filtered.map((school) => (
                 <li key={school}>
                   <button
                     type="button"
@@ -121,21 +66,12 @@ function SchoolSelect({
                       onChange(school);
                       setOpen(false);
                     }}
-                    onMouseEnter={() => setHoverIdx(i)}
-                    onMouseLeave={() => setHoverIdx(-1)}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "8px 12px",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      border: "none",
-                      cursor: "pointer",
-                      color: school === value ? "#f5a623" : "#e4e6f0",
-                      background:
-                        hoverIdx === i ? "rgba(245,166,35,0.1)" : "transparent",
-                    }}
+                    className="al-dropdown-option"
+                    style={
+                      school === value
+                        ? { color: "#8A5600", fontWeight: 500 }
+                        : undefined
+                    }
                   >
                     {school}
                   </button>
@@ -245,64 +181,40 @@ function AuthContent() {
     setSignedUp(true);
   }
 
+  const isSignin = tab === "signin";
+
   return (
-    <div style={{ background: "#080910", minHeight: "100vh", color: "#e4e6f0" }}>
-      {/* Nav */}
-      <nav
-        style={{
-          borderBottom: "1px solid #1a1d2a",
-          display: "flex",
-          alignItems: "center",
-          padding: "18px 32px",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            textDecoration: "none",
-          }}
-        >
-          <span style={{ color: "#f5a623", fontSize: "16px" }}>◈</span>
-          <span style={{ fontWeight: "500", fontSize: "14px", color: "#e4e6f0" }}>
-            VisaLens
+    <div className="al-page">
+      <span className="al-bg" aria-hidden="true" />
+
+      {/* ── Nav ─────────────────────────────────────────────── */}
+      <nav className="al-nav">
+        <Link href="/" className="al-brand">
+          <span className="al-brand-icon" aria-hidden="true">
+            ◈
           </span>
+          <span className="al-brand-name">VISALENS</span>
         </Link>
       </nav>
 
-      {/* Centered card */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "64px 24px",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "420px",
-            background: "#0f1018",
-            border: "1px solid #252838",
-            borderRadius: "16px",
-            padding: "32px",
-          }}
-        >
-          {/* Tabs */}
-          <div
-            style={{
-              display: "flex",
-              gap: "4px",
-              marginBottom: "28px",
-              background: "#080910",
-              border: "1px solid #252838",
-              borderRadius: "10px",
-              padding: "4px",
-            }}
-          >
+      {/* ── Main ────────────────────────────────────────────── */}
+      <main className="al-main">
+        <div className="al-card">
+          {/* Header */}
+          <div className="al-card-icon" aria-hidden="true">
+            ◈
+          </div>
+          <h1 className="al-heading">
+            {isSignin ? "Welcome back." : "Create your account."}
+          </h1>
+          <p className="al-subtext">
+            {isSignin
+              ? "Sign in to access your eligibility dashboard."
+              : "Join VisaLens to track your opportunities."}
+          </p>
+
+          {/* Tab switcher */}
+          <div className="al-tabs">
             {(
               [
                 { key: "signin", label: "Sign In" },
@@ -313,21 +225,9 @@ function AuthContent() {
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => switchTab(key)}
-                  style={{
-                    flex: 1,
-                    padding: "9px",
-                    borderRadius: "7px",
-                    fontSize: "12px",
-                    fontWeight: active ? "600" : "400",
-                    color: active ? "#f5a623" : "#7a7f99",
-                    background: active ? "rgba(245,166,35,0.1)" : "transparent",
-                    border: `1px solid ${
-                      active ? "rgba(245,166,35,0.3)" : "transparent"
-                    }`,
-                    cursor: "pointer",
-                    fontFamily: "var(--font-mono)",
-                  }}
+                  className={`al-tab${active ? " al-tab-active" : ""}`}
                 >
                   {label}
                 </button>
@@ -335,155 +235,418 @@ function AuthContent() {
             })}
           </div>
 
-          {tab === "signin" ? (
-            <form onSubmit={handleSignIn}>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={labelStyle}>Email</label>
+          {isSignin ? (
+            <form onSubmit={handleSignIn} className="al-form">
+              <div className="al-field">
+                <label className="al-label">Email</label>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={inputStyle}
+                  className="al-input"
+                  placeholder="you@school.edu"
                 />
               </div>
-              <div style={{ marginBottom: "24px" }}>
-                <label style={labelStyle}>Password</label>
+              <div className="al-field">
+                <label className="al-label">Password</label>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={inputStyle}
+                  className="al-input"
+                  placeholder="Enter your password"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                style={submitButtonStyle(loading)}
+                className="al-submit"
               >
-                {loading ? "Signing in…" : "Sign In"}
+                {loading ? "Signing in..." : "Sign In"}
               </button>
             </form>
           ) : signedUp ? (
-            <div style={{ textAlign: "center", padding: "24px 0" }}>
-              <p style={{ fontSize: "22px", marginBottom: "12px" }}>✉️</p>
-              <p style={{ fontSize: "14px", color: "#e4e6f0" }}>
-                Check your email to confirm your account
-              </p>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "#7a7f99",
-                  marginTop: "8px",
-                }}
-              >
-                Once confirmed, visit your dashboard to complete your profile.
-              </p>
+            <div className="al-success">
+              Check your email to confirm your account.
             </div>
           ) : (
-            <form onSubmit={handleSignUp}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "12px",
-                  marginBottom: "16px",
-                }}
-              >
-                <div>
-                  <label style={labelStyle}>First Name</label>
+            <form onSubmit={handleSignUp} className="al-form">
+              <div className="al-name-grid">
+                <div className="al-field">
+                  <label className="al-label">First Name</label>
                   <input
                     type="text"
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    style={inputStyle}
+                    className="al-input"
+                    placeholder="Jane"
                   />
                 </div>
-                <div>
-                  <label style={labelStyle}>Last Name</label>
+                <div className="al-field">
+                  <label className="al-label">Last Name</label>
                   <input
                     type="text"
                     required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    style={inputStyle}
+                    className="al-input"
+                    placeholder="Doe"
                   />
                 </div>
               </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={labelStyle}>Date of Birth</label>
+              <div className="al-field">
+                <label className="al-label">Date of Birth</label>
                 <input
                   type="date"
                   required
                   value={dob}
                   onChange={(e) => setDob(e.target.value)}
-                  style={{ ...inputStyle, colorScheme: "dark" }}
+                  className="al-input"
                 />
               </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={labelStyle}>School</label>
+              <div className="al-field">
+                <label className="al-label">School</label>
                 <SchoolSelect value={school} onChange={setSchool} />
               </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={labelStyle}>Email</label>
+              <div className="al-field">
+                <label className="al-label">Email</label>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={inputStyle}
+                  className="al-input"
+                  placeholder="you@school.edu"
                 />
               </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={labelStyle}>Password</label>
+              <div className="al-field">
+                <label className="al-label">Password</label>
                 <input
                   type="password"
                   required
                   minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={inputStyle}
+                  className="al-input"
+                  placeholder="At least 6 characters"
                 />
               </div>
-              <div style={{ marginBottom: "24px" }}>
-                <label style={labelStyle}>Confirm Password</label>
+              <div className="al-field">
+                <label className="al-label">Confirm Password</label>
                 <input
                   type="password"
                   required
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  style={inputStyle}
+                  className="al-input"
+                  placeholder="Re-enter your password"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                style={submitButtonStyle(loading)}
+                className="al-submit"
               >
-                {loading ? "Creating account…" : "Create Account"}
+                {loading ? "Creating account..." : "Create Account"}
               </button>
             </form>
           )}
 
-          {error && (
-            <p
-              style={{
-                marginTop: "16px",
-                fontSize: "12px",
-                color: "#ef9a9a",
-                padding: "10px 12px",
-                borderRadius: "10px",
-                background: "rgba(239,67,67,0.06)",
-                border: "1px solid rgba(239,67,67,0.25)",
-              }}
-            >
-              {error}
-            </p>
-          )}
+          {error && <div className="al-error">{error}</div>}
+
+          {/* Footer */}
+          <div className="al-card-footer">
+            By continuing you agree to our Terms of Service and Privacy Policy.
+          </div>
         </div>
-      </div>
+      </main>
+
+      <style jsx>{`
+        .al-page {
+          position: relative;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          background: #fbf8f1;
+          color: #11100d;
+        }
+        .al-bg {
+          position: fixed;
+          inset: 0;
+          z-index: 0;
+          pointer-events: none;
+          background-image: radial-gradient(
+            circle,
+            #ddd5c4 1px,
+            transparent 1px
+          );
+          background-size: 32px 32px;
+        }
+
+        /* ── Nav ─────────────────────────────────────────────── */
+        .al-nav {
+          position: relative;
+          z-index: 10;
+          height: 56px;
+          padding: 0 64px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          background: rgba(251, 248, 241, 0.92);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-bottom: 1px solid #e8dfcf;
+        }
+        .al-brand {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          text-decoration: none;
+        }
+        .al-brand-icon {
+          color: #f5a91d;
+          font-size: 18px;
+          line-height: 1;
+        }
+        .al-brand-name {
+          font-family: var(--font-mono);
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          color: #11100d;
+        }
+
+        /* ── Main ────────────────────────────────────────────── */
+        .al-main {
+          position: relative;
+          z-index: 1;
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 48px 24px;
+        }
+
+        /* ── Card ────────────────────────────────────────────── */
+        .al-card {
+          width: 100%;
+          max-width: 480px;
+          padding: 40px;
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-radius: 16px;
+          box-shadow: 0 8px 40px rgba(17, 16, 13, 0.07);
+        }
+        .al-card-icon {
+          text-align: center;
+          color: #f5a91d;
+          font-size: 20px;
+          line-height: 1;
+          margin-bottom: 16px;
+        }
+        .al-heading {
+          margin: 0;
+          font-family: var(--font-serif);
+          font-size: 28px;
+          font-weight: 500;
+          text-align: center;
+          color: #11100d;
+        }
+        .al-subtext {
+          margin: 8px 0 0;
+          font-size: 14px;
+          color: #6f6a60;
+          text-align: center;
+        }
+
+        /* ── Tabs ────────────────────────────────────────────── */
+        .al-tabs {
+          margin-top: 32px;
+          display: flex;
+          gap: 0;
+          background: #f3efe6;
+          border-radius: 8px;
+          padding: 4px;
+        }
+        .al-tab {
+          flex: 1;
+          padding: 10px 0;
+          text-align: center;
+          font-family: var(--font-sans);
+          font-size: 14px;
+          font-weight: 400;
+          color: #6f6a60;
+          background: transparent;
+          border: 1px solid transparent;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .al-tab-active {
+          background: #fffdf8;
+          border-color: #e8dfcf;
+          color: #11100d;
+          font-weight: 600;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ── Form ────────────────────────────────────────────── */
+        .al-form {
+          margin-top: 28px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .al-name-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .al-field {
+          display: flex;
+          flex-direction: column;
+        }
+        .al-label {
+          margin-bottom: 6px;
+          font-family: var(--font-mono);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #aaa398;
+        }
+
+        /* ── Buttons ─────────────────────────────────────────── */
+        .al-submit {
+          margin-top: 24px;
+          width: 100%;
+          padding: 13px;
+          background: #f5a91d;
+          color: #11100d;
+          font-family: var(--font-sans);
+          font-size: 15px;
+          font-weight: 700;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+        .al-submit:hover {
+          background: #d4890f;
+        }
+        .al-submit:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        .al-submit:disabled:hover {
+          background: #f5a91d;
+        }
+
+        /* ── Messages ────────────────────────────────────────── */
+        .al-error {
+          margin-top: 16px;
+          padding: 10px 14px;
+          background: #ffe8e8;
+          border: 1px solid #f5c0c0;
+          border-radius: 8px;
+          font-size: 13px;
+          color: #d83a3a;
+        }
+        .al-success {
+          margin-top: 28px;
+          padding: 16px;
+          background: #e6f7ed;
+          border: 1px solid #a8dfc0;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #1d9a57;
+          text-align: center;
+        }
+
+        /* ── Card footer ─────────────────────────────────────── */
+        .al-card-footer {
+          margin-top: 24px;
+          padding-top: 20px;
+          border-top: 1px solid #e8dfcf;
+          text-align: center;
+          font-size: 12px;
+          color: #aaa398;
+        }
+
+        @media (max-width: 600px) {
+          .al-nav {
+            padding: 0 24px;
+          }
+          .al-card {
+            padding: 28px 24px;
+          }
+        }
+      `}</style>
+
+      {/* Inputs and dropdown need global styles for focus / placeholder /
+          hover pseudo-states and to reach the SchoolSelect subtree. */}
+      <style jsx global>{`
+        .al-input {
+          width: 100%;
+          background: #fbf8f1;
+          border: 1px solid #e8dfcf;
+          border-radius: 8px;
+          padding: 11px 14px;
+          font-size: 14px;
+          color: #11100d;
+          outline: none;
+          font-family: var(--font-sans);
+          transition: border-color 0.15s ease;
+        }
+        .al-input::placeholder {
+          color: #aaa398;
+        }
+        .al-input:focus {
+          border-color: #f5a91d;
+          box-shadow: 0 0 0 3px rgba(245, 169, 29, 0.1);
+        }
+
+        .al-dropdown {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          width: 100%;
+          z-index: 20;
+          max-height: 200px;
+          overflow-y: auto;
+          margin: 0;
+          padding: 0;
+          list-style: none;
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-top: none;
+          border-radius: 0 0 8px 8px;
+        }
+        .al-dropdown-option {
+          display: block;
+          width: 100%;
+          text-align: left;
+          padding: 10px 14px;
+          font-family: var(--font-sans);
+          font-size: 13px;
+          color: #11100d;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+        .al-dropdown-option:hover {
+          background: #fbf8f1;
+        }
+        .al-dropdown-empty {
+          padding: 10px 14px;
+          font-size: 13px;
+          color: #aaa398;
+        }
+      `}</style>
     </div>
   );
 }
@@ -494,7 +657,7 @@ export default function AuthPage() {
       fallback={
         <div
           style={{
-            background: "#080910",
+            background: "#FBF8F1",
             minHeight: "100vh",
             display: "flex",
             alignItems: "center",
@@ -504,11 +667,11 @@ export default function AuthPage() {
           <p
             style={{
               fontSize: "13px",
-              color: "#7a7f99",
+              color: "#AAA398",
               fontFamily: "var(--font-mono)",
             }}
           >
-            Loading…
+            Loading...
           </p>
         </div>
       }
