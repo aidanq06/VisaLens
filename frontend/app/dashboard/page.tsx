@@ -406,13 +406,15 @@ export default function DashboardPage() {
             <Link
               href="/radar"
               className="db-action-card"
-              style={{ borderLeft: "4px solid #1D9A57" }}
+              style={{ background: "#E6F7ED", borderColor: "#A8DFC0" }}
             >
-              <span className="db-action-icon" style={{ background: "#E6F7ED", color: "#1D9A57" }}>
+              <span className="db-action-icon" style={{ background: "#1D9A57", color: "#FFFFFF" }}>
                 {RadarIcon}
               </span>
-              <p className="db-action-title">Radar</p>
-              <p className="db-action-desc">
+              <p className="db-action-title" style={{ color: "#11100D" }}>
+                Radar
+              </p>
+              <p className="db-action-desc" style={{ color: "#3A6B52" }}>
                 Browse internships, fellowships, and research programs discovered
                 by VisaLens.
               </p>
@@ -424,13 +426,15 @@ export default function DashboardPage() {
             <Link
               href="/scan"
               className="db-action-card"
-              style={{ borderLeft: "4px solid #F5A91D" }}
+              style={{ background: "#FFF4D6", borderColor: "#E8C96A" }}
             >
-              <span className="db-action-icon" style={{ background: "#FFF1C7", color: "#8A5600" }}>
+              <span className="db-action-icon" style={{ background: "#F5A91D", color: "#FFFFFF" }}>
                 {SearchIcon}
               </span>
-              <p className="db-action-title">Manual Analysis</p>
-              <p className="db-action-desc">
+              <p className="db-action-title" style={{ color: "#11100D" }}>
+                Manual Analysis
+              </p>
+              <p className="db-action-desc" style={{ color: "#6B5020" }}>
                 Paste any opportunity description to get a full eligibility risk
                 report.
               </p>
@@ -443,13 +447,15 @@ export default function DashboardPage() {
               type="button"
               onClick={openProfile}
               className="db-action-card"
-              style={{ borderLeft: "4px solid #AAA398" }}
+              style={{ background: "#FFFDF8", borderColor: "#E8DFCF" }}
             >
-              <span className="db-action-icon" style={{ background: "#F3EFE6", color: "#6F6A60" }}>
+              <span className="db-action-icon" style={{ background: "#11100D", color: "#FFFFFF" }}>
                 {PersonIcon}
               </span>
-              <p className="db-action-title">Your Profile</p>
-              <p className="db-action-desc">
+              <p className="db-action-title" style={{ color: "#11100D" }}>
+                Your Profile
+              </p>
+              <p className="db-action-desc" style={{ color: "#6F6A60" }}>
                 Update your visa status, school, and level to personalize your
                 risk scoring.
               </p>
@@ -463,13 +469,15 @@ export default function DashboardPage() {
                 mostRecentScanId ? `/results?scan=${mostRecentScanId}` : "/results"
               }
               className="db-action-card"
-              style={{ borderLeft: "4px solid #2563EB" }}
+              style={{ background: "#EEF4FF", borderColor: "#BFDBFE" }}
             >
-              <span className="db-action-icon" style={{ background: "#EEF4FF", color: "#2563EB" }}>
+              <span className="db-action-icon" style={{ background: "#2563EB", color: "#FFFFFF" }}>
                 {CalendarIcon}
               </span>
-              <p className="db-action-title">Verification Timeline</p>
-              <p className="db-action-desc">
+              <p className="db-action-title" style={{ color: "#11100D" }}>
+                Verification Timeline
+              </p>
+              <p className="db-action-desc" style={{ color: "#3A5080" }}>
                 View your step-by-step checklist and track progress on active
                 applications.
               </p>
@@ -909,14 +917,14 @@ export default function DashboardPage() {
           background: #fffdf8;
           border: 1px solid #e8dfcf;
           border-radius: 14px;
-          padding: 24px;
+          padding: 28px;
           cursor: pointer;
           text-decoration: none;
-          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          transition: all 0.2s ease;
         }
         .db-action-card:hover {
-          border-color: #d8c7a8;
-          box-shadow: 0 4px 20px rgba(17, 16, 13, 0.08);
+          box-shadow: 0 6px 24px rgba(17, 16, 13, 0.08);
+          transform: translateY(-2px);
         }
         .db-action-icon {
           display: flex;
