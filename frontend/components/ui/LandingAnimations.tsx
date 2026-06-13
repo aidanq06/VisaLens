@@ -5,13 +5,14 @@ import { useEffect } from "react";
 /**
  * Handles the landing page's client-side behavior so the page itself
  * can stay a server component:
- * 1. Reveals `.fade-section` elements with an IntersectionObserver.
+ * 1. Reveals `.reveal` and `.reveal-stagger` elements with an
+ *    IntersectionObserver by adding `is-visible`.
  * 2. Smooth-scrolls in-page anchor links instead of jumping.
  */
 export default function LandingAnimations() {
   useEffect(() => {
-    const sections = Array.from(
-      document.querySelectorAll<HTMLElement>(".fade-section"),
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>(".reveal, .reveal-stagger"),
     );
 
     const reduceMotion = window.matchMedia(
@@ -19,14 +20,14 @@ export default function LandingAnimations() {
     ).matches;
 
     if (reduceMotion) {
-      sections.forEach((section) => section.classList.add("fade-in"));
+      targets.forEach((el) => el.classList.add("is-visible"));
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            entry.target.classList.add("fade-in");
+            entry.target.classList.add("is-visible");
             observer.unobserve(entry.target);
           }
         }
@@ -35,7 +36,7 @@ export default function LandingAnimations() {
     );
 
     if (!reduceMotion) {
-      sections.forEach((section) => observer.observe(section));
+      targets.forEach((el) => observer.observe(el));
     }
 
     function handleAnchorClick(event: MouseEvent) {
@@ -46,9 +47,7 @@ export default function LandingAnimations() {
       const target = document.querySelector(anchor.getAttribute("href") ?? "");
       if (!target) return;
       event.preventDefault();
-      target.scrollIntoView({
-        behavior: reduceMotion ? "auto" : "smooth",
-      });
+      target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
     }
 
     document.addEventListener("click", handleAnchorClick);
