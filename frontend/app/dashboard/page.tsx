@@ -57,6 +57,14 @@ function greetingPrefix(): string {
   return "Good evening";
 }
 
+/** Fall back to a friendly name from the email local part: take the segment
+ *  before the first dot or @, then capitalize it. */
+function nameFromEmail(email?: string | null): string {
+  const local = (email?.split("@")[0] ?? "").split(".")[0] ?? "";
+  if (!local) return "there";
+  return local.charAt(0).toUpperCase() + local.slice(1);
+}
+
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
@@ -95,6 +103,15 @@ function checklistOf(scan: SavedScan): { done: number; total: number } {
 }
 
 /* ── Presentational sub-components ─────────────────────────────── */
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="db-section-title">
+      <span className="db-section-dash" aria-hidden="true" />
+      <span>{children}</span>
+    </div>
+  );
+}
 
 function RiskBadge({ level }: { level: RiskLevel | null }) {
   if (!level) return null;
@@ -179,6 +196,12 @@ const PersonIcon = (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
     <circle cx="12" cy="8" r="4" />
     <path d="M4 20c0-4 4-7 8-7s8 3 8 7" />
+  </svg>
+);
+
+const CalendarIcon = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8 2v3M16 2v3M3 8h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
   </svg>
 );
 
@@ -291,7 +314,19 @@ export default function DashboardPage() {
   const dueWithin14 = upcoming.filter((d) => d.days <= 14).length;
   const dueWithin30 = upcoming.filter((d) => d.days <= 30);
 
-  const displayName = firstName.trim() || (user.email?.split("@")[0] ?? "there");
+  const displayName = firstName.trim() || nameFromEmail(user.email);
+  const mostRecentScanId = scans[0]?.id;
+
+  const VISA_SHORT: Record<string, string> = {
+    "F-1": "F-1",
+    "J-1": "J-1",
+    international_other: "International",
+    domestic: "Domestic",
+    unsure: "Unsure",
+  };
+  const profilePreview = [VISA_SHORT[visaStatus] ?? visaStatus, schoolName.trim()]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div
@@ -310,27 +345,25 @@ export default function DashboardPage() {
           <span className="db-brand-name">VISALENS</span>
         </Link>
         <span className="db-nav-center">DASHBOARD</span>
-        <ProfileMenu />
+        <div className="db-nav-right">
+          <Link href="/radar" className="db-nav-secondary">
+            Find Internships
+          </Link>
+          <Link href="/scan" className="db-nav-primary">
+            Analyze Opportunity
+          </Link>
+          <ProfileMenu />
+        </div>
       </nav>
 
       <div className="db-container">
         {/* ── Section 1: Header ───────────────────────────────── */}
         <header className="db-header">
-          <div>
-            <p className="db-eyebrow">ELIGIBILITY DASHBOARD</p>
-            <h1 className="db-greeting">
-              {greetingPrefix()}, {displayName}.
-            </h1>
-            <p className="db-subtitle">Here is your eligibility overview.</p>
-          </div>
-          <div className="db-header-actions">
-            <Link href="/scan" className="db-btn-primary">
-              Analyze Opportunity
-            </Link>
-            <Link href="/radar" className="db-btn-secondary">
-              Find Internships
-            </Link>
-          </div>
+          <p className="db-eyebrow">ELIGIBILITY DASHBOARD</p>
+          <h1 className="db-greeting">
+            {greetingPrefix()}, {displayName}.
+          </h1>
+          <p className="db-subtitle">Here is your eligibility overview.</p>
         </header>
 
         {/* ── Section 2: Stats ────────────────────────────────── */}
@@ -340,7 +373,10 @@ export default function DashboardPage() {
             <p className="db-stat-value">{scans.length}</p>
             <p className="db-stat-sub">total scans saved</p>
           </div>
-          <div className="db-stat-card">
+          <div
+            className="db-stat-card"
+            style={{ background: "#FFE8E8", borderColor: "#F5C0C0" }}
+          >
             <p className="db-stat-label" style={{ color: "#D83A3A" }}>
               HIGH RISK
             </p>
@@ -349,11 +385,14 @@ export default function DashboardPage() {
             </p>
             <p className="db-stat-sub">opportunities flagged</p>
           </div>
-          <div className="db-stat-card">
+          <div
+            className="db-stat-card"
+            style={{ background: "#FFF4D6", borderColor: "#E8C96A" }}
+          >
             <p className="db-stat-label" style={{ color: "#8A5600" }}>
               UPCOMING DEADLINES
             </p>
-            <p className="db-stat-value" style={{ color: "#F5A91D" }}>
+            <p className="db-stat-value" style={{ color: "#8A5600" }}>
               {dueWithin14}
             </p>
             <p className="db-stat-sub">due within 14 days</p>
@@ -362,9 +401,13 @@ export default function DashboardPage() {
 
         {/* ── Section 3: Quick actions ────────────────────────── */}
         <section className="db-block">
-          <p className="db-section-title">QUICK ACTIONS</p>
+          <SectionLabel>QUICK ACTIONS</SectionLabel>
           <div className="db-actions">
-            <Link href="/radar" className="db-action-card">
+            <Link
+              href="/radar"
+              className="db-action-card"
+              style={{ borderLeft: "4px solid #1D9A57" }}
+            >
               <span className="db-action-icon" style={{ background: "#E6F7ED", color: "#1D9A57" }}>
                 {RadarIcon}
               </span>
@@ -378,7 +421,11 @@ export default function DashboardPage() {
               </p>
             </Link>
 
-            <Link href="/scan" className="db-action-card">
+            <Link
+              href="/scan"
+              className="db-action-card"
+              style={{ borderLeft: "4px solid #F5A91D" }}
+            >
               <span className="db-action-icon" style={{ background: "#FFF1C7", color: "#8A5600" }}>
                 {SearchIcon}
               </span>
@@ -392,7 +439,12 @@ export default function DashboardPage() {
               </p>
             </Link>
 
-            <button type="button" onClick={openProfile} className="db-action-card">
+            <button
+              type="button"
+              onClick={openProfile}
+              className="db-action-card"
+              style={{ borderLeft: "4px solid #AAA398" }}
+            >
               <span className="db-action-icon" style={{ background: "#F3EFE6", color: "#6F6A60" }}>
                 {PersonIcon}
               </span>
@@ -405,12 +457,32 @@ export default function DashboardPage() {
                 Edit Profile →
               </p>
             </button>
+
+            <Link
+              href={
+                mostRecentScanId ? `/results?scan=${mostRecentScanId}` : "/results"
+              }
+              className="db-action-card"
+              style={{ borderLeft: "4px solid #2563EB" }}
+            >
+              <span className="db-action-icon" style={{ background: "#EEF4FF", color: "#2563EB" }}>
+                {CalendarIcon}
+              </span>
+              <p className="db-action-title">Verification Timeline</p>
+              <p className="db-action-desc">
+                View your step-by-step checklist and track progress on active
+                applications.
+              </p>
+              <p className="db-action-cta" style={{ color: "#2563EB" }}>
+                View Timeline →
+              </p>
+            </Link>
           </div>
         </section>
 
         {/* ── Section 4: Saved opportunities ──────────────────── */}
         <section className="db-block">
-          <p className="db-section-title">YOUR OPPORTUNITIES</p>
+          <SectionLabel>YOUR OPPORTUNITIES</SectionLabel>
           {scans.length === 0 ? (
             <div className="db-empty">
               <svg
@@ -418,7 +490,7 @@ export default function DashboardPage() {
                 height="48"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#D8C7A8"
+                stroke="#E8C96A"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -455,7 +527,7 @@ export default function DashboardPage() {
         {/* ── Section 5: Upcoming deadlines ───────────────────── */}
         {dueWithin30.length > 0 && (
           <section className="db-block">
-            <p className="db-section-title">UPCOMING DEADLINES</p>
+            <SectionLabel>UPCOMING DEADLINES</SectionLabel>
             <div className="db-deadlines">
               {dueWithin30.map(({ scan, days }) => {
                 const urgent =
@@ -496,25 +568,31 @@ export default function DashboardPage() {
             onClick={() => setProfileOpen((o) => !o)}
             className="db-profile-toggle"
           >
-            <span className="db-section-title" style={{ marginBottom: 0 }}>
-              YOUR PROFILE
-            </span>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#AAA398"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s ease",
-              }}
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            <div className="db-section-title" style={{ marginBottom: 0 }}>
+              <span className="db-section-dash" aria-hidden="true" />
+              <span>YOUR PROFILE</span>
+            </div>
+            <div className="db-profile-toggle-right">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#AAA398"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s ease",
+                }}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+              {!profileOpen && profilePreview && (
+                <span className="db-profile-preview">{profilePreview}</span>
+              )}
+            </div>
           </button>
 
           {profileOpen && (
@@ -615,10 +693,47 @@ export default function DashboardPage() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: rgba(251, 248, 241, 0.92);
+          background: rgba(251, 248, 241, 0.95);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
-          border-bottom: 1px solid #e8dfcf;
+          border-bottom: 1px solid #d8c7a8;
+        }
+        .db-nav-right {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 12px;
+        }
+        .db-nav-secondary {
+          display: inline-flex;
+          align-items: center;
+          padding: 8px 18px;
+          background: transparent;
+          color: #6f6a60;
+          font-size: 13px;
+          border: 1px solid #d8c7a8;
+          border-radius: 8px;
+          text-decoration: none;
+          transition: border-color 0.15s ease;
+        }
+        .db-nav-secondary:hover {
+          border-color: #aaa398;
+        }
+        .db-nav-primary {
+          display: inline-flex;
+          align-items: center;
+          padding: 8px 18px;
+          background: #f5a91d;
+          color: #11100d;
+          font-size: 13px;
+          font-weight: 700;
+          border: none;
+          border-radius: 8px;
+          text-decoration: none;
+          transition: background 0.15s ease;
+        }
+        .db-nav-primary:hover {
+          background: #d4890f;
         }
         .db-brand {
           display: inline-flex;
@@ -655,38 +770,28 @@ export default function DashboardPage() {
 
         /* ── Header ──────────────────────────────────────────── */
         .db-header {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 24px;
           margin-bottom: 56px;
         }
         .db-eyebrow {
           margin: 0 0 8px;
           font-family: var(--font-mono);
-          font-size: 11px;
+          font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.14em;
           color: #aaa398;
         }
         .db-greeting {
           margin: 0;
           font-family: var(--font-serif);
-          font-size: 40px;
+          font-size: 48px;
           font-weight: 500;
-          line-height: 1.1;
+          line-height: 1.05;
           color: #11100d;
         }
         .db-subtitle {
           margin: 8px 0 0;
           font-size: 15px;
           color: #6f6a60;
-        }
-        .db-header-actions {
-          display: flex;
-          flex-direction: row;
-          gap: 12px;
-          flex-shrink: 0;
         }
 
         /* ── Buttons ─────────────────────────────────────────── */
@@ -767,9 +872,15 @@ export default function DashboardPage() {
 
         /* ── Section blocks ──────────────────────────────────── */
         .db-block {
-          margin-bottom: 48px;
+          border-top: 1px solid #e8dfcf;
+          padding-top: 40px;
+          margin-top: 8px;
+          margin-bottom: 0;
         }
         .db-section-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
           margin: 0 0 20px;
           font-family: var(--font-mono);
           font-size: 11px;
@@ -777,11 +888,18 @@ export default function DashboardPage() {
           letter-spacing: 0.14em;
           color: #aaa398;
         }
+        .db-section-dash {
+          width: 16px;
+          height: 2px;
+          background: #f5a91d;
+          border-radius: 1px;
+          flex-shrink: 0;
+        }
 
         /* ── Quick actions ───────────────────────────────────── */
         .db-actions {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: 1fr 1fr;
           gap: 16px;
         }
         .db-action-card {
@@ -798,7 +916,7 @@ export default function DashboardPage() {
         }
         .db-action-card:hover {
           border-color: #d8c7a8;
-          box-shadow: 0 4px 16px rgba(17, 16, 13, 0.06);
+          box-shadow: 0 4px 20px rgba(17, 16, 13, 0.08);
         }
         .db-action-icon {
           display: flex;
@@ -828,8 +946,8 @@ export default function DashboardPage() {
 
         /* ── Empty state ─────────────────────────────────────── */
         .db-empty {
-          background: #fffdf8;
-          border: 1px solid #e8dfcf;
+          background: #fff4d6;
+          border: 1px solid #e8c96a;
           border-radius: 14px;
           padding: 64px 40px;
           text-align: center;
@@ -839,7 +957,7 @@ export default function DashboardPage() {
           font-family: var(--font-serif);
           font-size: 22px;
           font-weight: 500;
-          color: #11100d;
+          color: #8a5600;
         }
         .db-empty-text {
           margin: 8px auto 0;
@@ -976,7 +1094,9 @@ export default function DashboardPage() {
 
         /* ── Profile ─────────────────────────────────────────── */
         .db-profile-block {
-          margin-top: 48px;
+          border-top: 1px solid #e8dfcf;
+          padding-top: 40px;
+          margin-top: 8px;
           margin-bottom: 64px;
         }
         .db-profile-toggle {
@@ -988,6 +1108,17 @@ export default function DashboardPage() {
           background: transparent;
           border: none;
           cursor: pointer;
+        }
+        .db-profile-toggle-right {
+          display: flex;
+          flex-direction: row-reverse;
+          align-items: center;
+          gap: 12px;
+        }
+        .db-profile-preview {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          color: #6f6a60;
         }
         .db-profile-card {
           margin-top: 16px;
@@ -1078,15 +1209,17 @@ export default function DashboardPage() {
           .db-nav-center {
             display: none;
           }
+          .db-nav-secondary {
+            display: none;
+          }
           .db-container {
             padding: 24px;
           }
           .db-header {
-            flex-direction: column;
             margin-bottom: 40px;
           }
           .db-greeting {
-            font-size: 32px;
+            font-size: 36px;
           }
           .db-stats {
             grid-template-columns: 1fr;
