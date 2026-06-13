@@ -9,18 +9,29 @@ import { getUser, getUserScans, saveProfile, type SavedScan } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import ProfileMenu from "@/components/ui/ProfileMenu";
 
-const RISK_COLORS: Record<RiskLevel, { bg: string; text: string }> = {
-  high: { bg: "rgba(239,68,68,0.15)", text: "#ef4444" },
-  medium_high: { bg: "rgba(245,166,35,0.15)", text: "#f5a623" },
-  moderate: { bg: "rgba(234,179,8,0.15)", text: "#eab308" },
-  low: { bg: "rgba(34,197,94,0.15)", text: "#22c55e" },
+/* ── Risk + opportunity-type presentation ──────────────────────── */
+
+const RISK_BADGE: Record<
+  RiskLevel,
+  { label: string; bg: string; color: string; border: string }
+> = {
+  high: { label: "HIGH RISK", bg: "#FFE8E8", color: "#D83A3A", border: "#F5C0C0" },
+  medium_high: {
+    label: "MEDIUM RISK",
+    bg: "#FFF1C7",
+    color: "#8A5600",
+    border: "#E8C96A",
+  },
+  moderate: { label: "MODERATE", bg: "#FFF4D6", color: "#8A5600", border: "#E8DFCF" },
+  low: { label: "LOW RISK", bg: "#E6F7ED", color: "#1D9A57", border: "#A8DFC0" },
 };
 
-const RISK_LABELS: Record<RiskLevel, string> = {
-  high: "High Risk",
-  medium_high: "Elevated Risk",
-  moderate: "Moderate Risk",
-  low: "Low Risk",
+const TYPE_PILL: Record<string, { bg: string; color: string; border: string }> = {
+  internship: { bg: "#FFF1C7", color: "#8A5600", border: "#E8C96A" },
+  fellowship: { bg: "#EEF4FF", color: "#2563EB", border: "#BFDBFE" },
+  research: { bg: "#E6F7ED", color: "#1D9A57", border: "#A8DFC0" },
+  hackathon: { bg: "#F3EFE6", color: "#6F6A60", border: "#E8DFCF" },
+  other: { bg: "#F3EFE6", color: "#6F6A60", border: "#E8DFCF" },
 };
 
 const VISA_OPTIONS = [
@@ -37,20 +48,21 @@ const LEVEL_OPTIONS = [
   { value: "graduate", label: "Graduate" },
 ];
 
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: "11px",
-  textTransform: "uppercase",
-  letterSpacing: "0.12em",
-  color: "#484d66",
-  fontFamily: "var(--font-mono)",
-  marginBottom: "16px",
-};
+/* ── Pure helpers (logic preserved from prior version) ─────────── */
 
-function greeting(): string {
+function greetingPrefix(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
+}
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function analysisOf(scan: SavedScan): VisaLensAnalysis | null {
@@ -82,150 +94,102 @@ function checklistOf(scan: SavedScan): { done: number; total: number } {
   return { done: Math.min(done, total), total };
 }
 
-function RiskBadgePill({ level }: { level: RiskLevel | null }) {
+/* ── Presentational sub-components ─────────────────────────────── */
+
+function RiskBadge({ level }: { level: RiskLevel | null }) {
   if (!level) return null;
-  const c = RISK_COLORS[level];
+  const c = RISK_BADGE[level];
   return (
     <span
-      style={{
-        fontSize: "11px",
-        padding: "3px 10px",
-        borderRadius: "999px",
-        color: c.text,
-        background: c.bg,
-        fontFamily: "var(--font-mono)",
-        whiteSpace: "nowrap",
-      }}
+      className="db-risk-badge"
+      style={{ background: c.bg, color: c.color, borderColor: c.border }}
     >
-      {RISK_LABELS[level]}
+      {c.label}
     </span>
   );
 }
 
 function ScanCard({ scan }: { scan: SavedScan }) {
-  const [hovered, setHovered] = useState(false);
   const level = riskLevelOf(scan);
   const { done, total } = checklistOf(scan);
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const typeKey = scan.opportunity_type?.toLowerCase() ?? "other";
+  const pill = TYPE_PILL[typeKey] ?? TYPE_PILL.other;
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: "#0f1018",
-        border: `1px solid ${hovered ? "rgba(245,166,35,0.3)" : "#252838"}`,
-        borderRadius: "12px",
-        padding: "20px 24px",
-        display: "flex",
-        alignItems: "center",
-        gap: "24px",
-        transition: "border-color 0.2s",
-      }}
-    >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            flexWrap: "wrap",
-            marginBottom: "10px",
-          }}
-        >
+    <Link href={`/results?scan=${scan.id}`} className="db-scan-card">
+      <div className="db-scan-top">
+        <div className="db-scan-left">
           <span
-            style={{
-              fontSize: "14px",
-              fontWeight: "600",
-              color: "#ffffff",
-            }}
+            className="db-type-pill"
+            style={{ background: pill.bg, color: pill.color, borderColor: pill.border }}
           >
-            {scan.title || "Untitled opportunity"}
+            {typeKey}
           </span>
-          <span
-            style={{
-              fontSize: "10px",
-              padding: "2px 8px",
-              borderRadius: "999px",
-              color: "#7a7f99",
-              background: "#161823",
-              border: "1px solid #252838",
-              fontFamily: "var(--font-mono)",
-              textTransform: "capitalize",
-            }}
-          >
-            {scan.opportunity_type}
-          </span>
-          <RiskBadgePill level={level} />
-        </div>
-
-        {total > 0 && (
-          <div style={{ marginBottom: "10px", maxWidth: "320px" }}>
-            <p
-              style={{
-                fontSize: "11px",
-                color: "#7a7f99",
-                marginBottom: "6px",
-              }}
-            >
-              {done} of {total} steps completed
-            </p>
-            <div
-              style={{
-                height: "4px",
-                borderRadius: "999px",
-                background: "#252838",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  width: `${total ? (done / total) * 100 : 0}%`,
-                  borderRadius: "999px",
-                  background: "#f5a623",
-                }}
-              />
-            </div>
+          <div className="db-scan-meta">
+            <span className="db-scan-title">
+              {scan.title || "Untitled opportunity"}
+            </span>
+            <span className="db-scan-date">{fmtDate(scan.created_at)}</span>
           </div>
-        )}
-
-        <p
-          style={{
-            fontSize: "11px",
-            color: "#484d66",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          Scanned{" "}
-          {new Date(scan.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </p>
+        </div>
+        <RiskBadge level={level} />
       </div>
 
-      <Link
-        href={`/results?scan=${scan.id}`}
-        style={{
-          fontSize: "12px",
-          color: "#f5a623",
-          textDecoration: "none",
-          fontFamily: "var(--font-mono)",
-          whiteSpace: "nowrap",
-        }}
-      >
-        View Results →
-      </Link>
-    </div>
+      <div className="db-progress">
+        <div className="db-progress-head">
+          <span className="db-progress-label">VERIFICATION PROGRESS</span>
+          <span className="db-progress-count">
+            {done} of {total} steps completed
+          </span>
+        </div>
+        <div className="db-progress-track">
+          <div
+            className="db-progress-fill"
+            style={{
+              width: `${pct}%`,
+              background: done > 0 ? "#F5A91D" : "#E8DFCF",
+            }}
+          />
+        </div>
+      </div>
+    </Link>
   );
 }
+
+/* ── Icons ─────────────────────────────────────────────────────── */
+
+const RadarIcon = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+    <path d="M4 12a8 8 0 0 1 8-8" />
+    <path d="M7 12a5 5 0 0 1 5-5" />
+    <path d="M10 12a2 2 0 0 1 2-2" />
+    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+const SearchIcon = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+    <circle cx="11" cy="11" r="7" />
+    <path d="M21 21l-4.3-4.3" />
+  </svg>
+);
+
+const PersonIcon = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 20c0-4 4-7 8-7s8 3 8 7" />
+  </svg>
+);
+
+/* ── Page ──────────────────────────────────────────────────────── */
 
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [scans, setScans] = useState<SavedScan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [firstName, setFirstName] = useState("");
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [visaStatus, setVisaStatus] = useState("F-1");
@@ -251,6 +215,7 @@ export default function DashboardPage() {
       if (cancelled) return;
       setScans(data ?? []);
       if (profile) {
+        if (profile.first_name) setFirstName(profile.first_name);
         if (profile.visa_status) setVisaStatus(profile.visa_status);
         if (profile.school_level) setSchoolLevel(profile.school_level);
         if (profile.school_name) setSchoolName(profile.school_name);
@@ -273,15 +238,24 @@ export default function DashboardPage() {
       email: user.email,
     });
     setSavingProfile(false);
-    setProfileMessage(error ? "Could not save profile" : "Profile saved");
+    setProfileMessage(error ? "Could not save profile" : "Profile saved.");
     setTimeout(() => setProfileMessage(null), 3000);
+  }
+
+  function openProfile() {
+    setProfileOpen(true);
+    requestAnimationFrame(() => {
+      document
+        .getElementById("profile")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   if (loading || !user) {
     return (
       <div
         style={{
-          background: "#080910",
+          background: "#FBF8F1",
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
@@ -290,12 +264,12 @@ export default function DashboardPage() {
       >
         <p
           style={{
-            fontSize: "12px",
-            color: "#7a7f99",
+            fontSize: "13px",
+            color: "#AAA398",
             fontFamily: "var(--font-mono)",
           }}
         >
-          Loading your dashboard…
+          Loading your dashboard...
         </p>
       </div>
     );
@@ -317,332 +291,160 @@ export default function DashboardPage() {
   const dueWithin14 = upcoming.filter((d) => d.days <= 14).length;
   const dueWithin30 = upcoming.filter((d) => d.days <= 30);
 
-  const emailName = user.email?.split("@")[0] ?? "there";
+  const displayName = firstName.trim() || (user.email?.split("@")[0] ?? "there");
 
   return (
-    <div style={{ background: "#080910", minHeight: "100vh", color: "#e4e6f0" }}>
-      {/* Nav */}
-      <nav
-        style={{
-          borderBottom: "1px solid #1a1d2a",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "18px 32px",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            textDecoration: "none",
-          }}
-        >
-          <span style={{ color: "#f5a623", fontSize: "16px" }}>◈</span>
-          <span style={{ fontWeight: "500", fontSize: "14px", color: "#e4e6f0" }}>
-            VisaLens
+    <div
+      className="db-page"
+      style={{
+        backgroundImage: "radial-gradient(circle, #DDD5C4 1px, transparent 1px)",
+        backgroundSize: "32px 32px",
+      }}
+    >
+      {/* ── Nav ───────────────────────────────────────────────── */}
+      <nav className="db-nav">
+        <Link href="/" className="db-brand">
+          <span className="db-brand-icon" aria-hidden="true">
+            ◈
           </span>
+          <span className="db-brand-name">VISALENS</span>
         </Link>
-        <span
-          style={{
-            fontSize: "12px",
-            color: "#484d66",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          Dashboard
-        </span>
+        <span className="db-nav-center">DASHBOARD</span>
         <ProfileMenu />
       </nav>
 
-      <div
-        style={{ maxWidth: "900px", margin: "0 auto", padding: "56px 24px 96px" }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: "24px",
-            flexWrap: "wrap",
-            marginBottom: "48px",
-          }}
-        >
+      <div className="db-container">
+        {/* ── Section 1: Header ───────────────────────────────── */}
+        <header className="db-header">
           <div>
-            <h1
-              style={{
-                fontFamily: "var(--font-serif)",
-                fontSize: "32px",
-                lineHeight: "1.15",
-                color: "#e4e6f0",
-                marginBottom: "8px",
-              }}
-            >
-              {greeting()}, {emailName}
+            <p className="db-eyebrow">ELIGIBILITY DASHBOARD</p>
+            <h1 className="db-greeting">
+              {greetingPrefix()}, {displayName}.
             </h1>
-            <p style={{ fontSize: "14px", color: "#7a7f99" }}>
-              Here&apos;s your eligibility overview
-            </p>
+            <p className="db-subtitle">Here is your eligibility overview.</p>
           </div>
-          <Link
-            href="/scan"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "12px 24px",
-              borderRadius: "12px",
-              fontSize: "14px",
-              fontWeight: "600",
-              background: "#f5a623",
-              color: "#080910",
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Analyze New Opportunity →
-          </Link>
-        </div>
+          <div className="db-header-actions">
+            <Link href="/scan" className="db-btn-primary">
+              Analyze Opportunity
+            </Link>
+            <Link href="/radar" className="db-btn-secondary">
+              Find Internships
+            </Link>
+          </div>
+        </header>
 
-        {/* Stats row */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "12px",
-            marginBottom: "56px",
-          }}
-        >
-          {[
-            { value: scans.length, label: "Total scans saved" },
-            { value: highRiskCount, label: "High risk opportunities" },
-            { value: dueWithin14, label: "Deadlines within 14 days" },
-          ].map(({ value, label }) => (
-            <div
-              key={label}
-              style={{
-                background: "#0f1018",
-                border: "1px solid #252838",
-                borderRadius: "12px",
-                padding: "24px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "32px",
-                  fontWeight: "600",
-                  color: "#e4e6f0",
-                  marginBottom: "4px",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                {value}
-              </p>
-              <p style={{ fontSize: "12px", color: "#7a7f99" }}>{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Profile settings */}
-        <section style={{ marginBottom: "56px" }}>
-          <button
-            onClick={() => setProfileOpen((o) => !o)}
-            style={{
-              ...sectionTitleStyle,
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
-            <span style={{ fontSize: "9px" }}>{profileOpen ? "▼" : "▶"}</span>
-            Your Profile
-          </button>
-          {profileOpen && (
-            <div
-              style={{
-                background: "#0f1018",
-                border: "1px solid #252838",
-                borderRadius: "12px",
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "20px",
-              }}
-            >
-              {[
-                {
-                  label: "Visa / status",
-                  options: VISA_OPTIONS,
-                  value: visaStatus,
-                  onChange: setVisaStatus,
-                },
-                {
-                  label: "School level",
-                  options: LEVEL_OPTIONS,
-                  value: schoolLevel,
-                  onChange: setSchoolLevel,
-                },
-              ].map(({ label, options, value, onChange }) => (
-                <div key={label}>
-                  <p
-                    style={{
-                      fontSize: "11px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.12em",
-                      color: "#484d66",
-                      fontFamily: "var(--font-mono)",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {label}
-                  </p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                    {options.map((opt) => {
-                      const active = opt.value === value;
-                      return (
-                        <button
-                          key={opt.value}
-                          onClick={() => onChange(opt.value)}
-                          style={{
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            color: active ? "#f5a623" : "#7a7f99",
-                            background: active
-                              ? "rgba(245,166,35,0.1)"
-                              : "#161823",
-                            border: `1px solid ${
-                              active ? "rgba(245,166,35,0.35)" : "#252838"
-                            }`,
-                            fontFamily: "var(--font-mono)",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              <div>
-                <p
-                  style={{
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                    color: "#484d66",
-                    fontFamily: "var(--font-mono)",
-                    marginBottom: "8px",
-                  }}
-                >
-                  School name{" "}
-                  <span style={{ textTransform: "none", letterSpacing: 0 }}>
-                    (optional)
-                  </span>
-                </p>
-                <input
-                  type="text"
-                  placeholder="e.g. University of Washington"
-                  value={schoolName}
-                  onChange={(e) => setSchoolName(e.target.value)}
-                  style={{
-                    width: "100%",
-                    maxWidth: "400px",
-                    background: "#080910",
-                    border: "1px solid #252838",
-                    borderRadius: "10px",
-                    padding: "10px 14px",
-                    fontSize: "13px",
-                    color: "#e4e6f0",
-                    outline: "none",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={savingProfile}
-                  style={{
-                    padding: "10px 24px",
-                    borderRadius: "10px",
-                    fontSize: "13px",
-                    fontWeight: "600",
-                    background: savingProfile ? "#1e2130" : "#f5a623",
-                    color: savingProfile ? "#484d66" : "#080910",
-                    border: "none",
-                    cursor: savingProfile ? "wait" : "pointer",
-                  }}
-                >
-                  {savingProfile ? "Saving…" : "Save Profile"}
-                </button>
-                {profileMessage && (
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color:
-                        profileMessage === "Profile saved"
-                          ? "#22c55e"
-                          : "#ef9a9a",
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    {profileMessage}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+        {/* ── Section 2: Stats ────────────────────────────────── */}
+        <section className="db-stats">
+          <div className="db-stat-card">
+            <p className="db-stat-label">OPPORTUNITIES ANALYZED</p>
+            <p className="db-stat-value">{scans.length}</p>
+            <p className="db-stat-sub">total scans saved</p>
+          </div>
+          <div className="db-stat-card">
+            <p className="db-stat-label" style={{ color: "#D83A3A" }}>
+              HIGH RISK
+            </p>
+            <p className="db-stat-value" style={{ color: "#D83A3A" }}>
+              {highRiskCount}
+            </p>
+            <p className="db-stat-sub">opportunities flagged</p>
+          </div>
+          <div className="db-stat-card">
+            <p className="db-stat-label" style={{ color: "#8A5600" }}>
+              UPCOMING DEADLINES
+            </p>
+            <p className="db-stat-value" style={{ color: "#F5A91D" }}>
+              {dueWithin14}
+            </p>
+            <p className="db-stat-sub">due within 14 days</p>
+          </div>
         </section>
 
-        {/* Saved scans */}
-        <section style={{ marginBottom: "56px" }}>
-          <p style={sectionTitleStyle}>Your Opportunities</p>
-          {scans.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: "64px 24px",
-                background: "#0f1018",
-                border: "1px solid #252838",
-                borderRadius: "12px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: "#7a7f99",
-                  marginBottom: "16px",
-                }}
-              >
-                No opportunities analyzed yet. Start by analyzing your first
-                opportunity.
+        {/* ── Section 3: Quick actions ────────────────────────── */}
+        <section className="db-block">
+          <p className="db-section-title">QUICK ACTIONS</p>
+          <div className="db-actions">
+            <Link href="/radar" className="db-action-card">
+              <span className="db-action-icon" style={{ background: "#E6F7ED", color: "#1D9A57" }}>
+                {RadarIcon}
+              </span>
+              <p className="db-action-title">Radar</p>
+              <p className="db-action-desc">
+                Browse internships, fellowships, and research programs discovered
+                by VisaLens.
               </p>
-              <Link
-                href="/scan"
-                style={{
-                  fontSize: "13px",
-                  color: "#f5a623",
-                  fontFamily: "var(--font-mono)",
-                  textDecoration: "none",
-                }}
+              <p className="db-action-cta" style={{ color: "#1D9A57" }}>
+                Open Radar →
+              </p>
+            </Link>
+
+            <Link href="/scan" className="db-action-card">
+              <span className="db-action-icon" style={{ background: "#FFF1C7", color: "#8A5600" }}>
+                {SearchIcon}
+              </span>
+              <p className="db-action-title">Manual Analysis</p>
+              <p className="db-action-desc">
+                Paste any opportunity description to get a full eligibility risk
+                report.
+              </p>
+              <p className="db-action-cta" style={{ color: "#8A5600" }}>
+                Analyze Now →
+              </p>
+            </Link>
+
+            <button type="button" onClick={openProfile} className="db-action-card">
+              <span className="db-action-icon" style={{ background: "#F3EFE6", color: "#6F6A60" }}>
+                {PersonIcon}
+              </span>
+              <p className="db-action-title">Your Profile</p>
+              <p className="db-action-desc">
+                Update your visa status, school, and level to personalize your
+                risk scoring.
+              </p>
+              <p className="db-action-cta" style={{ color: "#6F6A60" }}>
+                Edit Profile →
+              </p>
+            </button>
+          </div>
+        </section>
+
+        {/* ── Section 4: Saved opportunities ──────────────────── */}
+        <section className="db-block">
+          <p className="db-section-title">YOUR OPPORTUNITIES</p>
+          {scans.length === 0 ? (
+            <div className="db-empty">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#D8C7A8"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ marginBottom: "20px" }}
               >
-                Analyze an opportunity →
-              </Link>
+                <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                <path d="M5 3h9l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+                <circle cx="11" cy="13" r="2.5" />
+                <path d="M15 17l-2-2" />
+              </svg>
+              <h2 className="db-empty-title">No opportunities analyzed yet.</h2>
+              <p className="db-empty-text">
+                Start by analyzing your first opportunity or browse programs on
+                Radar.
+              </p>
+              <div className="db-empty-actions">
+                <Link href="/scan" className="db-btn-primary">
+                  Analyze Opportunity
+                </Link>
+                <Link href="/radar" className="db-btn-secondary">
+                  Open Radar
+                </Link>
+              </div>
             </div>
           ) : (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
+            <div className="db-scan-list">
               {scans.map((scan) => (
                 <ScanCard key={scan.id} scan={scan} />
               ))}
@@ -650,59 +452,675 @@ export default function DashboardPage() {
           )}
         </section>
 
-        {/* Upcoming deadlines */}
+        {/* ── Section 5: Upcoming deadlines ───────────────────── */}
         {dueWithin30.length > 0 && (
-          <section>
-            <p style={sectionTitleStyle}>Upcoming Deadlines</p>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-            >
+          <section className="db-block">
+            <p className="db-section-title">UPCOMING DEADLINES</p>
+            <div className="db-deadlines">
               {dueWithin30.map(({ scan, days }) => {
-                const urgencyColor =
-                  days < 7 ? "#ef4444" : days < 14 ? "#f5a623" : "#7a7f99";
+                const urgent =
+                  days < 7
+                    ? { bg: "#FFE8E8", color: "#D83A3A", border: "#F5C0C0" }
+                    : days <= 14
+                    ? { bg: "#FFF1C7", color: "#8A5600", border: "#E8C96A" }
+                    : { bg: "#F3EFE6", color: "#6F6A60", border: "#E8DFCF" };
                 return (
-                  <div
-                    key={scan.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "16px",
-                      padding: "16px 24px",
-                      background: "#0f1018",
-                      border: "1px solid #252838",
-                      borderRadius: "12px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: "500",
-                        color: "#e4e6f0",
-                        flex: 1,
-                        minWidth: 0,
-                      }}
-                    >
+                  <div key={scan.id} className="db-deadline-row">
+                    <span className="db-deadline-title">
                       {scan.title || "Untitled opportunity"}
                     </span>
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        color: urgencyColor,
-                        fontFamily: "var(--font-mono)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {days === 0 ? "Due today" : `${days} days left`}
-                    </span>
-                    <RiskBadgePill level={riskLevelOf(scan)} />
+                    <div className="db-deadline-right">
+                      <span
+                        className="db-days-badge"
+                        style={{
+                          background: urgent.bg,
+                          color: urgent.color,
+                          borderColor: urgent.border,
+                        }}
+                      >
+                        {days === 0 ? "Due today" : `${days} days left`}
+                      </span>
+                      <RiskBadge level={riskLevelOf(scan)} />
+                    </div>
                   </div>
                 );
               })}
             </div>
           </section>
         )}
+
+        {/* ── Section 6: Profile ──────────────────────────────── */}
+        <section id="profile" className="db-profile-block">
+          <button
+            type="button"
+            onClick={() => setProfileOpen((o) => !o)}
+            className="db-profile-toggle"
+          >
+            <span className="db-section-title" style={{ marginBottom: 0 }}>
+              YOUR PROFILE
+            </span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#AAA398"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s ease",
+              }}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {profileOpen && (
+            <div className="db-profile-card">
+              <div className="db-profile-fields">
+                <div className="db-profile-field">
+                  <p className="db-field-label">VISA STATUS</p>
+                  <div className="db-pill-group">
+                    {VISA_OPTIONS.map((opt) => {
+                      const active = opt.value === visaStatus;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setVisaStatus(opt.value)}
+                          className={`db-pill${active ? " db-pill-active" : ""}`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="db-profile-field">
+                  <p className="db-field-label">SCHOOL LEVEL</p>
+                  <div className="db-pill-group">
+                    {LEVEL_OPTIONS.map((opt) => {
+                      const active = opt.value === schoolLevel;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setSchoolLevel(opt.value)}
+                          className={`db-pill${active ? " db-pill-active" : ""}`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="db-profile-field">
+                  <p className="db-field-label">SCHOOL NAME</p>
+                  <input
+                    type="text"
+                    placeholder="e.g. University of Washington"
+                    value={schoolName}
+                    onChange={(e) => setSchoolName(e.target.value)}
+                    className="db-input"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={savingProfile}
+                className="db-btn-primary db-save-btn"
+              >
+                {savingProfile ? "Saving..." : "Save Profile"}
+              </button>
+              {profileMessage && (
+                <p
+                  className="db-profile-message"
+                  style={{
+                    color:
+                      profileMessage === "Profile saved." ? "#1D9A57" : "#D83A3A",
+                  }}
+                >
+                  {profileMessage}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
       </div>
+
+      <style jsx>{`
+        .db-page {
+          position: relative;
+          min-height: 100vh;
+          padding-top: 56px;
+          background-color: #fbf8f1;
+          color: #11100d;
+        }
+
+        /* ── Nav ─────────────────────────────────────────────── */
+        .db-nav {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 50;
+          height: 56px;
+          padding: 0 64px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: rgba(251, 248, 241, 0.92);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-bottom: 1px solid #e8dfcf;
+        }
+        .db-brand {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          text-decoration: none;
+        }
+        .db-brand-icon {
+          color: #f5a91d;
+          font-size: 18px;
+          line-height: 1;
+        }
+        .db-brand-name {
+          font-family: var(--font-mono);
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          color: #11100d;
+        }
+        .db-nav-center {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #aaa398;
+        }
+
+        /* ── Container ───────────────────────────────────────── */
+        .db-container {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 48px 64px;
+        }
+
+        /* ── Header ──────────────────────────────────────────── */
+        .db-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 24px;
+          margin-bottom: 56px;
+        }
+        .db-eyebrow {
+          margin: 0 0 8px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #aaa398;
+        }
+        .db-greeting {
+          margin: 0;
+          font-family: var(--font-serif);
+          font-size: 40px;
+          font-weight: 500;
+          line-height: 1.1;
+          color: #11100d;
+        }
+        .db-subtitle {
+          margin: 8px 0 0;
+          font-size: 15px;
+          color: #6f6a60;
+        }
+        .db-header-actions {
+          display: flex;
+          flex-direction: row;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+
+        /* ── Buttons ─────────────────────────────────────────── */
+        .db-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 11px 24px;
+          background: #f5a91d;
+          color: #11100d;
+          font-size: 14px;
+          font-weight: 700;
+          border: none;
+          border-radius: 8px;
+          text-decoration: none;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+        .db-btn-primary:hover {
+          background: #d4890f;
+        }
+        .db-btn-primary:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        .db-btn-secondary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 11px 24px;
+          background: transparent;
+          color: #6f6a60;
+          font-size: 14px;
+          border: 1px solid #d8c7a8;
+          border-radius: 8px;
+          text-decoration: none;
+          cursor: pointer;
+          transition: border-color 0.15s ease;
+        }
+        .db-btn-secondary:hover {
+          border-color: #aaa398;
+        }
+
+        /* ── Stats ───────────────────────────────────────────── */
+        .db-stats {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-bottom: 48px;
+        }
+        .db-stat-card {
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-radius: 14px;
+          padding: 24px 28px;
+        }
+        .db-stat-label {
+          margin: 0;
+          font-family: var(--font-mono);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #aaa398;
+        }
+        .db-stat-value {
+          margin: 8px 0 0;
+          font-family: var(--font-serif);
+          font-size: 40px;
+          font-weight: 500;
+          line-height: 1;
+          color: #11100d;
+        }
+        .db-stat-sub {
+          margin: 4px 0 0;
+          font-size: 13px;
+          color: #6f6a60;
+        }
+
+        /* ── Section blocks ──────────────────────────────────── */
+        .db-block {
+          margin-bottom: 48px;
+        }
+        .db-section-title {
+          margin: 0 0 20px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          color: #aaa398;
+        }
+
+        /* ── Quick actions ───────────────────────────────────── */
+        .db-actions {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+        }
+        .db-action-card {
+          display: block;
+          text-align: left;
+          width: 100%;
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-radius: 14px;
+          padding: 24px;
+          cursor: pointer;
+          text-decoration: none;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .db-action-card:hover {
+          border-color: #d8c7a8;
+          box-shadow: 0 4px 16px rgba(17, 16, 13, 0.06);
+        }
+        .db-action-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+        }
+        .db-action-title {
+          margin: 16px 0 0;
+          font-size: 15px;
+          font-weight: 600;
+          color: #11100d;
+        }
+        .db-action-desc {
+          margin: 4px 0 0;
+          font-size: 13px;
+          line-height: 1.5;
+          color: #6f6a60;
+        }
+        .db-action-cta {
+          margin: 16px 0 0;
+          font-family: var(--font-mono);
+          font-size: 11px;
+        }
+
+        /* ── Empty state ─────────────────────────────────────── */
+        .db-empty {
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-radius: 14px;
+          padding: 64px 40px;
+          text-align: center;
+        }
+        .db-empty-title {
+          margin: 0;
+          font-family: var(--font-serif);
+          font-size: 22px;
+          font-weight: 500;
+          color: #11100d;
+        }
+        .db-empty-text {
+          margin: 8px auto 0;
+          max-width: 360px;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #6f6a60;
+        }
+        .db-empty-actions {
+          display: flex;
+          flex-direction: row;
+          gap: 12px;
+          justify-content: center;
+          margin-top: 28px;
+        }
+
+        /* ── Scan cards ──────────────────────────────────────── */
+        .db-scan-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .db-scan-card {
+          display: block;
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-radius: 14px;
+          padding: 24px;
+          text-decoration: none;
+          cursor: pointer;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .db-scan-card:hover {
+          border-color: #d8c7a8;
+          box-shadow: 0 4px 16px rgba(17, 16, 13, 0.04);
+        }
+        .db-scan-top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 16px;
+        }
+        .db-scan-left {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          min-width: 0;
+        }
+        .db-scan-meta {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+        .db-scan-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #11100d;
+        }
+        .db-scan-date {
+          margin-top: 4px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          color: #aaa398;
+        }
+
+        /* ── Progress ────────────────────────────────────────── */
+        .db-progress {
+          margin-top: 16px;
+        }
+        .db-progress-head {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 6px;
+        }
+        .db-progress-label {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: #aaa398;
+        }
+        .db-progress-count {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: #6f6a60;
+        }
+        .db-progress-track {
+          height: 3px;
+          background: #e8dfcf;
+          border-radius: 2px;
+          overflow: hidden;
+        }
+        .db-progress-fill {
+          height: 100%;
+          border-radius: 2px;
+          transition: width 0.3s ease;
+        }
+
+        /* ── Deadlines ───────────────────────────────────────── */
+        .db-deadlines {
+          display: flex;
+          flex-direction: column;
+        }
+        .db-deadline-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-radius: 12px;
+          padding: 16px 20px;
+          margin-bottom: 8px;
+        }
+        .db-deadline-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: #11100d;
+          min-width: 0;
+        }
+        .db-deadline-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+        .db-days-badge {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          font-weight: 600;
+          border: 1px solid transparent;
+          border-radius: 4px;
+          padding: 3px 10px;
+          white-space: nowrap;
+        }
+
+        /* ── Profile ─────────────────────────────────────────── */
+        .db-profile-block {
+          margin-top: 48px;
+          margin-bottom: 64px;
+        }
+        .db-profile-toggle {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 0;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+        }
+        .db-profile-card {
+          margin-top: 16px;
+          background: #fffdf8;
+          border: 1px solid #e8dfcf;
+          border-radius: 14px;
+          padding: 32px;
+        }
+        .db-profile-fields {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          align-items: start;
+        }
+        .db-profile-field {
+          display: flex;
+          flex-direction: column;
+        }
+        .db-field-label {
+          margin: 0 0 8px;
+          font-family: var(--font-mono);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          color: #aaa398;
+        }
+        .db-pill-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .db-pill {
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-family: var(--font-sans);
+          background: #fbf8f1;
+          border: 1px solid #e8dfcf;
+          color: #6f6a60;
+          cursor: pointer;
+          transition: border-color 0.15s ease;
+        }
+        .db-pill:hover {
+          border-color: #d8c7a8;
+        }
+        .db-pill-active {
+          background: #f5a91d;
+          border-color: #f5a91d;
+          color: #11100d;
+          font-weight: 600;
+        }
+        .db-save-btn {
+          margin-top: 24px;
+        }
+        .db-profile-message {
+          margin: 12px 0 0;
+          font-size: 12px;
+        }
+
+        /* ── Risk + type badges ──────────────────────────────── */
+        :global(.db-risk-badge) {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          font-weight: 700;
+          border: 1px solid transparent;
+          border-radius: 4px;
+          padding: 4px 12px;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        :global(.db-type-pill) {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          font-weight: 600;
+          text-transform: uppercase;
+          border: 1px solid transparent;
+          border-radius: 4px;
+          padding: 3px 10px;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        /* ── Responsive ──────────────────────────────────────── */
+        @media (max-width: 768px) {
+          .db-nav {
+            padding: 0 24px;
+          }
+          .db-nav-center {
+            display: none;
+          }
+          .db-container {
+            padding: 24px;
+          }
+          .db-header {
+            flex-direction: column;
+            margin-bottom: 40px;
+          }
+          .db-greeting {
+            font-size: 32px;
+          }
+          .db-stats {
+            grid-template-columns: 1fr;
+          }
+          .db-actions {
+            grid-template-columns: 1fr;
+          }
+          .db-profile-fields {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      <style jsx global>{`
+        .db-input {
+          width: 100%;
+          background: #fbf8f1;
+          border: 1px solid #e8dfcf;
+          border-radius: 8px;
+          padding: 10px 14px;
+          font-size: 13px;
+          color: #11100d;
+          font-family: var(--font-sans);
+          outline: none;
+          transition: border-color 0.15s ease;
+        }
+        .db-input::placeholder {
+          color: #aaa398;
+        }
+        .db-input:focus {
+          border-color: #f5a91d;
+          box-shadow: 0 0 0 3px rgba(245, 169, 29, 0.1);
+        }
+      `}</style>
     </div>
   );
 }
