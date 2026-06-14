@@ -175,7 +175,9 @@ export default function ScanPage() {
       let scanId: string | null = null;
       try {
         const user = await getUser();
-        if (user) {
+        // Only save when we have an authenticated user id. An anonymous
+        // visitor has no row to own the scan and would trip the RLS policy.
+        if (user?.id) {
           const { id, error: saveError } = await saveScan(
             user.id,
             title.trim() || "Untitled Opportunity",
@@ -183,14 +185,18 @@ export default function ScanPage() {
             analysis
           );
           if (saveError) {
-            console.error("Failed to save scan:", saveError);
+            // Log and continue: a failed save must never block the user.
+            console.error("Failed to save scan:", saveError.message ?? saveError);
+          } else {
+            scanId = id;
           }
-          scanId = id;
         }
       } catch (saveError) {
+        // Network or unexpected error while saving; proceed to results anyway.
         console.error("Failed to save scan:", saveError);
       }
 
+      // Always redirect, with the saved scan when available, otherwise local.
       router.push(scanId ? `/results?scan=${scanId}` : "/results");
     } catch {
       setLoading(false);

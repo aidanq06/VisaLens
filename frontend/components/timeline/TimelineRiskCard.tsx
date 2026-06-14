@@ -59,22 +59,25 @@ export default function TimelineRiskCard({
     },
   ];
 
-  const maxDay = Math.max(...segments.map((s) => s.day)) + 1;
+  // Distribute points evenly across the track by position so labels never
+  // collide when several milestones fall on adjacent days.
+  const pointPct = (i: number) =>
+    segments.length > 1 ? (i / (segments.length - 1)) * 100 : 50;
 
   return (
     <div
       className="rounded-2xl border"
-      style={{ background: "#0f1018", borderColor: "#252838" }}
+      style={{ background: "#FFFDF8", borderColor: "#E8DFCF" }}
     >
       {/* Header */}
-      <div className="px-6 py-4 border-b" style={{ borderColor: "#1a1d2a" }}>
+      <div className="px-6 py-4 border-b" style={{ borderColor: "#E8DFCF" }}>
         <p
           className="text-[11px] uppercase tracking-widest mb-0.5"
-          style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+          style={{ color: "#AAA398", fontFamily: "var(--font-mono)" }}
         >
           Timeline Risk
         </p>
-        <h3 className="text-sm font-medium" style={{ color: "#e4e6f0" }}>
+        <h3 className="text-sm font-medium" style={{ color: "#11100D" }}>
           Deadline & Verification Simulator
         </h3>
       </div>
@@ -82,13 +85,13 @@ export default function TimelineRiskCard({
       {/* Stats row */}
       <div
         className="grid grid-cols-3 divide-x"
-        style={{ borderColor: "#1a1d2a" }}
+        style={{ borderColor: "#E8DFCF" }}
       >
         {[
           {
             label: "Days until deadline",
             value: days !== null ? `${days}d` : "—",
-            color: isTight ? "#ef4343" : "#e4e6f0",
+            color: isTight ? "#ef4343" : "#11100D",
           },
           {
             label: "Verification needed",
@@ -101,10 +104,10 @@ export default function TimelineRiskCard({
             color,
           },
         ].map(({ label, value, color: c }) => (
-          <div key={label} className="px-4 py-4 border-b" style={{ borderColor: "#1a1d2a" }}>
+          <div key={label} className="px-4 py-4 border-b" style={{ borderColor: "#E8DFCF" }}>
             <p
               className="text-[10px] uppercase tracking-widest mb-1"
-              style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+              style={{ color: "#AAA398", fontFamily: "var(--font-mono)" }}
             >
               {label}
             </p>
@@ -129,7 +132,7 @@ export default function TimelineRiskCard({
             <p className="text-sm font-medium" style={{ color: "#ef4343" }}>
               Verification window is tighter than the deadline
             </p>
-            <p className="text-xs mt-0.5" style={{ color: "#7a7f99" }}>
+            <p className="text-xs mt-0.5" style={{ color: "#6F6A60" }}>
               You may not receive responses in time. Ask the organizer today.
             </p>
           </div>
@@ -137,16 +140,19 @@ export default function TimelineRiskCard({
       )}
 
       {/* Timeline bar */}
-      <div className="px-6 pt-5 pb-2">
-        <div className="relative h-8 flex items-center">
+      <div className="px-6 pt-5 pb-2" style={{ overflow: "visible" }}>
+        <div
+          className="relative h-8 flex items-center"
+          style={{ overflow: "visible" }}
+        >
           {/* Track */}
           <div
             className="absolute inset-x-0 h-px"
-            style={{ background: "#252838" }}
+            style={{ background: "#E8DFCF" }}
           />
           {/* Segment markers */}
-          {segments.map((seg) => {
-            const pct = (seg.day / maxDay) * 100;
+          {segments.map((seg, i) => {
+            const pct = pointPct(i);
             return (
               <div
                 key={seg.label}
@@ -156,7 +162,7 @@ export default function TimelineRiskCard({
                 <div
                   className="w-2.5 h-2.5 rounded-full border-2 z-10"
                   style={{
-                    background: seg.active ? seg.color : "#1e2130",
+                    background: seg.active ? seg.color : "#FBF8F1",
                     borderColor: seg.color,
                     boxShadow: seg.active ? `0 0 6px ${seg.color}70` : undefined,
                   }}
@@ -165,32 +171,42 @@ export default function TimelineRiskCard({
             );
           })}
         </div>
-        {/* Labels below */}
-        <div className="relative h-12 mt-1">
-          {segments.map((seg) => {
-            const pct = (seg.day / maxDay) * 100;
+        {/* Labels below: each stacked under its dot, centered, wrapping */}
+        <div
+          className="relative mt-2"
+          style={{ minHeight: "64px", overflow: "visible" }}
+        >
+          {segments.map((seg, i) => {
+            const pct = pointPct(i);
             return (
               <div
                 key={seg.label}
-                className="absolute text-center"
+                className="absolute"
                 style={{
                   left: `${pct}%`,
                   transform: "translateX(-50%)",
                   width: "80px",
+                  maxWidth: "80px",
+                  textAlign: "center",
                 }}
               >
                 <p
-                  className="text-[9px] leading-tight"
                   style={{
-                    color: seg.active ? seg.color : "#484d66",
+                    color: seg.active ? seg.color : "#AAA398",
                     fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    lineHeight: 1.3,
                   }}
                 >
                   {seg.label}
                 </p>
                 <p
-                  className="text-[9px]"
-                  style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+                  style={{
+                    color: "#AAA398",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    lineHeight: 1.3,
+                  }}
                 >
                   Day {seg.day}
                 </p>
@@ -204,15 +220,15 @@ export default function TimelineRiskCard({
       <div className="px-6 pb-5">
         <div
           className="rounded-xl px-4 py-3"
-          style={{ background: "#161823", border: "1px solid #252838" }}
+          style={{ background: "#FBF8F1", border: "1px solid #E8DFCF" }}
         >
           <p
             className="text-[11px] uppercase tracking-widest mb-1.5"
-            style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+            style={{ color: "#AAA398", fontFamily: "var(--font-mono)" }}
           >
             Recommendation
           </p>
-          <p className="text-sm leading-relaxed" style={{ color: "#e4e6f0" }}>
+          <p className="text-sm leading-relaxed" style={{ color: "#11100D" }}>
             {timeline.recommendation}
           </p>
         </div>
@@ -222,11 +238,11 @@ export default function TimelineRiskCard({
       {timeline.critical_path.length > 0 && (
         <div
           className="px-6 pb-6 border-t pt-4"
-          style={{ borderColor: "#1a1d2a" }}
+          style={{ borderColor: "#E8DFCF" }}
         >
           <p
             className="text-[11px] uppercase tracking-widest mb-3"
-            style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+            style={{ color: "#AAA398", fontFamily: "var(--font-mono)" }}
           >
             Critical Path
           </p>
@@ -234,10 +250,10 @@ export default function TimelineRiskCard({
             {timeline.critical_path.map((step, i) => {
               if (!checklistProgress || !onToggleStep) {
                 return (
-                  <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#7a7f99" }}>
+                  <li key={i} className="flex items-start gap-3 text-sm" style={{ color: "#6F6A60" }}>
                     <span
                       className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-medium"
-                      style={{ background: "#1e2130", color: "#7a7f99" }}
+                      style={{ background: "#FBF8F1", color: "#6F6A60" }}
                     >
                       {i + 1}
                     </span>
@@ -253,7 +269,7 @@ export default function TimelineRiskCard({
                     onClick={() => onToggleStep(i)}
                     className="flex items-start gap-3 text-sm w-full text-left cursor-pointer"
                     style={{
-                      color: done ? "#484d66" : "#7a7f99",
+                      color: done ? "#AAA398" : "#6F6A60",
                       background: "transparent",
                       border: "none",
                       padding: 0,
@@ -266,7 +282,7 @@ export default function TimelineRiskCard({
                         height: "16px",
                         marginTop: "2px",
                         borderRadius: "4px",
-                        border: `1px solid ${done ? "#f5a623" : "#252838"}`,
+                        border: `1px solid ${done ? "#f5a623" : "#E8DFCF"}`,
                         background: done ? "#f5a623" : "transparent",
                       }}
                     >
