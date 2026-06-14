@@ -2,10 +2,14 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
 export type ProfileInput = {
-  visa_status: string;
-  school_level: string;
-  school_name?: string;
   email: string;
+  visa_status?: string;
+  school_level?: string;
+  school_name?: string;
+  first_name?: string;
+  last_name?: string;
+  /** ISO date string (yyyy-mm-dd). */
+  dob?: string;
 };
 
 export type SavedScan = {
@@ -14,7 +18,7 @@ export type SavedScan = {
   title: string;
   opportunity_type: string;
   analysis_json: Record<string, unknown>;
-  checklist_progress: Record<string, boolean> | null;
+  checklist_progress: boolean[] | null;
   created_at: string;
 };
 

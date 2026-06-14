@@ -58,17 +58,17 @@ export default function BlockerGraph({ graph }: Props) {
   return (
     <div
       className="rounded-2xl border overflow-hidden"
-      style={{ background: "#0f1018", borderColor: "#252838" }}
+      style={{ background: "#FFFDF8", borderColor: "#E8DFCF" }}
     >
       {/* Header */}
-      <div className="px-6 py-4 border-b" style={{ borderColor: "#1a1d2a" }}>
+      <div className="px-6 py-4 border-b" style={{ borderColor: "#E8DFCF" }}>
         <p
           className="text-[11px] uppercase tracking-widest mb-0.5"
-          style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+          style={{ color: "#AAA398", fontFamily: "var(--font-mono)" }}
         >
           Blocker Graph
         </p>
-        <h3 className="text-sm font-medium" style={{ color: "#e4e6f0" }}>
+        <h3 className="text-sm font-medium" style={{ color: "#11100D" }}>
           Verification Dependency Chain
         </h3>
       </div>
@@ -76,7 +76,7 @@ export default function BlockerGraph({ graph }: Props) {
       {/* Legend */}
       <div
         className="px-6 py-3 border-b flex gap-5 flex-wrap"
-        style={{ borderColor: "#1a1d2a", background: "#080910" }}
+        style={{ borderColor: "#E8DFCF", background: "#FBF8F1" }}
       >
         {(["clear", "warning", "blocked", "pending"] as GraphNodeStatus[]).map(
           (s) => {
@@ -92,7 +92,7 @@ export default function BlockerGraph({ graph }: Props) {
                 />
                 <span
                   className="text-[10px] capitalize"
-                  style={{ color: "#7a7f99", fontFamily: "var(--font-mono)" }}
+                  style={{ color: "#6F6A60", fontFamily: "var(--font-mono)" }}
                 >
                   {s}
                 </span>
@@ -143,7 +143,7 @@ export default function BlockerGraph({ graph }: Props) {
                           <p
                             className="text-[10px] mt-0.5"
                             style={{
-                              color: "#484d66",
+                              color: "#AAA398",
                               fontFamily: "var(--font-mono)",
                             }}
                           >
@@ -162,7 +162,7 @@ export default function BlockerGraph({ graph }: Props) {
                   <div className="flex flex-col items-center gap-0.5">
                     <div
                       className="w-px h-5"
-                      style={{ background: "#252838" }}
+                      style={{ background: "#D8C7A8" }}
                     />
                     <svg
                       width="8"
@@ -172,7 +172,7 @@ export default function BlockerGraph({ graph }: Props) {
                     >
                       <path
                         d="M4 5L0 0H8L4 5Z"
-                        fill="#252838"
+                        fill="#D8C7A8"
                       />
                     </svg>
                   </div>
@@ -186,11 +186,11 @@ export default function BlockerGraph({ graph }: Props) {
       {/* Edges summary */}
       <div
         className="px-6 py-4 border-t"
-        style={{ borderColor: "#1a1d2a", background: "#080910" }}
+        style={{ borderColor: "#E8DFCF", background: "#FBF8F1" }}
       >
         <p
           className="text-[11px] uppercase tracking-widest mb-3"
-          style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+          style={{ color: "#AAA398", fontFamily: "var(--font-mono)" }}
         >
           Dependency Chain
         </p>
@@ -200,11 +200,11 @@ export default function BlockerGraph({ graph }: Props) {
             const toNode = nodeById.get(edge.to);
             if (!fromNode || !toNode) return null;
             return (
-              <div key={i} className="flex items-center gap-2 text-xs" style={{ color: "#7a7f99" }}>
+              <div key={i} className="flex items-center gap-2 text-xs" style={{ color: "#6F6A60" }}>
                 <span style={{ color: STATUS_CONFIG[fromNode.status].color }}>
                   {fromNode.label}
                 </span>
-                <span style={{ color: "#484d66" }}>→</span>
+                <span style={{ color: "#AAA398" }}>→</span>
                 <span style={{ color: STATUS_CONFIG[toNode.status].color }}>
                   {toNode.label}
                 </span>

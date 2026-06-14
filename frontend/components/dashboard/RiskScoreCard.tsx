@@ -1,16 +1,43 @@
 "use client";
 
 import type { VisaLensAnalysis } from "@/types/analysis";
-import { riskColor, riskLabel } from "@/lib/utils";
 
 type Props = { risk: VisaLensAnalysis["risk"] };
 
+/* Score-number / gauge color per risk level. */
+const LEVEL_COLOR: Record<string, string> = {
+  high: "#D83A3A",
+  medium_high: "#8A5600",
+  moderate: "#F5A91D",
+  low: "#1D9A57",
+};
+
+/* Category progress-bar fill per level. */
+const BAR_FILL: Record<string, { color: string; opacity: number; width: string }> = {
+  high: { color: "#D83A3A", opacity: 1, width: "100%" },
+  medium_high: { color: "#F5A91D", opacity: 1, width: "75%" },
+  moderate: { color: "#F5A91D", opacity: 0.6, width: "50%" },
+  low: { color: "#1D9A57", opacity: 1, width: "25%" },
+};
+
+/* Category level badge palette. */
+const BADGE_STYLE: Record<string, { bg: string; color: string; border: string }> = {
+  high: { bg: "#FFE8E8", color: "#D83A3A", border: "#F5C0C0" },
+  medium_high: { bg: "#FFF1C7", color: "#8A5600", border: "#E8C96A" },
+  moderate: { bg: "#FFF4D6", color: "#8A5600", border: "#E8DFCF" },
+  low: { bg: "#E6F7ED", color: "#1D9A57", border: "#A8DFC0" },
+};
+
+const labelMicro: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "10px",
+  textTransform: "uppercase",
+  letterSpacing: "0.14em",
+  color: "#AAA398",
+};
+
 export default function RiskScoreCard({ risk }: Props) {
-  const color = riskColor(risk.level);
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  const pct = Math.min(risk.score / 100, 1);
-  const dashOffset = circumference * (1 - pct);
+  const color = LEVEL_COLOR[risk.level] ?? "#D83A3A";
 
   const categories = Object.entries(risk.categories) as [
     string,
@@ -19,112 +46,125 @@ export default function RiskScoreCard({ risk }: Props) {
 
   return (
     <div
-      className="rounded-2xl p-6 border"
-      style={{ background: "#0f1018", borderColor: "#252838" }}
+      style={{
+        background: "#FFFDF8",
+        border: "1px solid #E8DFCF",
+        borderRadius: "14px",
+        overflow: "hidden",
+      }}
     >
-      {/* Header row */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <p
-            className="text-xs uppercase tracking-widest mb-1"
-            style={{ color: "#7a7f99", fontFamily: "var(--font-mono)" }}
-          >
-            Risk Score
-          </p>
+      {/* Header */}
+      <div
+        style={{
+          padding: "24px 28px",
+          borderBottom: "1px solid #E8DFCF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <p style={{ ...labelMicro, margin: 0 }}>RISK SCORE</p>
           <h2
-            className="text-lg font-medium leading-snug"
-            style={{ color: "#e4e6f0" }}
+            style={{
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "#11100D",
+              margin: "4px 0 0",
+              lineHeight: 1.3,
+            }}
           >
             {risk.main_label}
           </h2>
         </div>
 
-        {/* Arc gauge */}
-        <div className="relative flex-shrink-0 w-32 h-32">
-          <svg viewBox="0 0 128 128" className="w-full h-full -rotate-90">
-            <circle
-              cx="64" cy="64" r={radius}
-              fill="none"
-              stroke="#1e2130"
-              strokeWidth="10"
-            />
-            <circle
-              cx="64" cy="64" r={radius}
-              fill="none"
-              stroke={color}
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-              style={{ transition: "stroke-dashoffset 1s ease", filter: `drop-shadow(0 0 8px ${color}60)` }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className="text-3xl font-semibold leading-none tabular-nums"
-              style={{ color, fontFamily: "var(--font-mono)" }}
-            >
-              {risk.score}
-            </span>
-            <span
-              className="text-[10px] mt-0.5 uppercase tracking-widest"
-              style={{ color: "#7a7f99", fontFamily: "var(--font-mono)" }}
-            >
-              {riskLabel(risk.level)}
-            </span>
-          </div>
+        {/* Score circle */}
+        <div
+          style={{
+            flexShrink: 0,
+            width: "72px",
+            height: "72px",
+            borderRadius: "50%",
+            border: `3px solid ${color}`,
+            background: "#FFFFFF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "28px",
+              fontWeight: 500,
+              color,
+              lineHeight: 1,
+            }}
+          >
+            {risk.score}
+          </span>
         </div>
       </div>
 
-      {/* Summary */}
-      <p className="text-sm leading-relaxed mb-6" style={{ color: "#7a7f99" }}>
-        {risk.summary}
-      </p>
+      {/* Body */}
+      <div style={{ padding: "24px 28px" }}>
+        {/* Why this score */}
+        <p style={{ ...labelMicro, margin: "0 0 16px" }}>WHY THIS SCORE</p>
 
-      {/* Why this score — auditable point trail when available */}
-      <div className="mb-6">
-        <p
-          className="text-[11px] uppercase tracking-widest mb-3"
-          style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
-        >
-          Why this score
-        </p>
         {risk.score_breakdown && risk.score_breakdown.length > 0 ? (
-          <div className="space-y-2.5">
+          <div>
             {risk.score_breakdown.map((item, i) => {
-              const positive = item.points >= 0;
-              const pointColor = positive ? "#ef4343" : "#22c55e";
+              const adds = item.points >= 0;
+              const badge = adds
+                ? { bg: "#FFE8E8", color: "#D83A3A", border: "#F5C0C0" }
+                : { bg: "#E6F7ED", color: "#1D9A57", border: "#A8DFC0" };
               return (
-                <div key={i} className="flex items-start gap-3">
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    padding: "10px 0",
+                    borderBottom: "1px solid #F3EFE6",
+                  }}
+                >
                   <span
-                    className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-md tabular-nums"
                     style={{
-                      color: pointColor,
-                      background: `${pointColor}14`,
-                      border: `1px solid ${pointColor}30`,
+                      flexShrink: 0,
                       fontFamily: "var(--font-mono)",
-                      minWidth: "44px",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      borderRadius: "4px",
+                      padding: "2px 8px",
+                      minWidth: "36px",
                       textAlign: "center",
+                      background: badge.bg,
+                      color: badge.color,
+                      border: `1px solid ${badge.border}`,
+                      height: "fit-content",
                     }}
                   >
-                    {positive ? "+" : ""}
+                    {adds ? "+" : ""}
                     {item.points}
                   </span>
-                  <div className="min-w-0">
-                    <p className="text-sm leading-snug" style={{ color: "#e4e6f0" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: "13px", fontWeight: 500, color: "#11100D", margin: 0, lineHeight: 1.4 }}>
                       {item.label}
                     </p>
                     {item.evidence && (
                       <p
-                        className="text-xs mt-0.5 leading-relaxed"
-                        style={{ color: "#7a7f99", fontFamily: "var(--font-mono)" }}
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "11px",
+                          color: "#AAA398",
+                          margin: "2px 0 0",
+                          lineHeight: 1.4,
+                        }}
                       >
                         &ldquo;{item.evidence}&rdquo;
                         {item.confidence != null && (
-                          <span style={{ color: "#484d66" }}>
-                            {" "}
-                            · {Math.round(item.confidence * 100)}% confidence
-                          </span>
+                          <span> · {Math.round(item.confidence * 100)}% confidence</span>
                         )}
                       </p>
                     )}
@@ -132,70 +172,115 @@ export default function RiskScoreCard({ risk }: Props) {
                 </div>
               );
             })}
-            <p className="text-[10px] pt-1" style={{ color: "#484d66" }}>
-              Deterministic rules — the AI extracts evidence, the score itself is
-              rule-based and clamped to 0–100.
-            </p>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <div>
             {risk.reasons.map((reason, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: "#7a7f99" }}>
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  padding: "10px 0",
+                  borderBottom: "1px solid #F3EFE6",
+                }}
+              >
                 <span
-                  className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-                  style={{ background: color }}
+                  style={{
+                    flexShrink: 0,
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    background: color,
+                    marginTop: "6px",
+                  }}
                 />
-                {reason}
-              </li>
+                <p style={{ fontSize: "13px", fontWeight: 500, color: "#11100D", margin: 0, lineHeight: 1.4 }}>
+                  {reason}
+                </p>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-      </div>
 
-      {/* Category breakdown */}
-      <div>
         <p
-          className="text-[11px] uppercase tracking-widest mb-3"
-          style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+          style={{
+            fontSize: "11px",
+            color: "#AAA398",
+            marginTop: "16px",
+            fontStyle: "italic",
+            lineHeight: 1.5,
+          }}
         >
-          Category breakdown
+          Deterministic rules. The AI extracts evidence, the score itself is
+          rule-based and clamped to 0-100.
         </p>
-        <div className="space-y-2.5">
+
+        {/* Category breakdown */}
+        <p style={{ ...labelMicro, margin: "24px 0 16px" }}>CATEGORY BREAKDOWN</p>
+        <div>
           {categories.map(([key, cat]) => {
-            const catColor = riskColor(cat.level as "low" | "moderate" | "medium_high" | "high");
-            const barWidth = `${Math.min((cat.score / 50) * 100, 100)}%`;
+            const fill = BAR_FILL[cat.level] ?? BAR_FILL.moderate;
+            const badge = BADGE_STYLE[cat.level] ?? BADGE_STYLE.moderate;
             return (
-              <div key={key}>
-                <div className="flex items-center justify-between mb-1">
-                  <span
-                    className="text-xs capitalize"
-                    style={{
-                      color: "#7a7f99",
-                      fontFamily: "var(--font-mono)",
-                    }}
-                  >
-                    {key.replace("_", " ")}
-                  </span>
-                  <span
-                    className="text-[10px] uppercase tracking-wide"
-                    style={{ color: catColor, fontFamily: "var(--font-mono)" }}
-                  >
-                    {cat.level.replace("_", "-")}
-                  </span>
-                </div>
+              <div
+                key={key}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "8px 0",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: "#11100D",
+                    width: "140px",
+                    flexShrink: 0,
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {key.replace(/_/g, " ")}
+                </span>
                 <div
-                  className="h-1 rounded-full overflow-hidden"
-                  style={{ background: "#1e2130" }}
+                  style={{
+                    flex: 1,
+                    height: "4px",
+                    background: "#E8DFCF",
+                    borderRadius: "2px",
+                    overflow: "hidden",
+                  }}
                 >
                   <div
-                    className="h-full rounded-full transition-all duration-700"
                     style={{
-                      width: barWidth,
-                      background: catColor,
-                      boxShadow: `0 0 6px ${catColor}50`,
+                      width: fill.width,
+                      height: "100%",
+                      background: fill.color,
+                      opacity: fill.opacity,
+                      borderRadius: "2px",
+                      transition: "width 0.7s ease",
                     }}
                   />
                 </div>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    borderRadius: "4px",
+                    padding: "2px 8px",
+                    minWidth: "80px",
+                    textAlign: "center",
+                    background: badge.bg,
+                    color: badge.color,
+                    border: `1px solid ${badge.border}`,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {cat.level.replace(/_/g, "-")}
+                </span>
               </div>
             );
           })}

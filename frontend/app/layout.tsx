@@ -25,9 +25,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "VisaLens AI — Opportunity Risk Engine",
+  title: "VisaLens — Eligibility Workflow Engine for International Students",
   description:
-    "Turn confusing STEM opportunity descriptions into structured eligibility risk reports for international students.",
+    "VisaLens finds internships, fellowships, and research programs, scores your eligibility risk on each one, and builds a step-by-step verification timeline so nothing falls through the cracks.",
 };
 
 export default function RootLayout({
