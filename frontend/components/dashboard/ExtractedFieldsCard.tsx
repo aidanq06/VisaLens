@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { VisaLensAnalysis } from "@/types/analysis";
-import { confidenceLabel } from "@/lib/utils";
 
 type Props = { extracted: VisaLensAnalysis["extracted"] };
 
@@ -18,21 +17,64 @@ const FIELD_LABELS: Record<string, string> = {
   student_level_requirement: "Student Level",
 };
 
+const labelMicro: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "10px",
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  color: "#AAA398",
+};
+
+const ELIGIBILITY: Record<string, { bg: string; color: string; border: string; label: string }> = {
+  likely_eligible: { bg: "#E6F7ED", color: "#1D9A57", border: "#A8DFC0", label: "Likely Eligible" },
+  likely_not_eligible: { bg: "#FFE8E8", color: "#D83A3A", border: "#F5C0C0", label: "Likely Not Eligible" },
+  unclear: { bg: "#FFF1C7", color: "#8A5600", border: "#E8C96A", label: "Unclear" },
+  unknown: { bg: "#F3EFE6", color: "#AAA398", border: "#E8DFCF", label: "Unknown" },
+};
+
 function EligibilityChip({ value }: { value: string }) {
-  const map: Record<string, { color: string; label: string }> = {
-    likely_eligible:   { color: "#2ecc71", label: "Likely Eligible" },
-    likely_not_eligible: { color: "#ef4343", label: "Likely Not Eligible" },
-    unclear:           { color: "#f5a623", label: "Unclear" },
-    unknown:           { color: "#7a7f99", label: "Unknown" },
-  };
-  const { color, label } = map[value] ?? { color: "#7a7f99", label: value };
+  const s = ELIGIBILITY[value] ?? ELIGIBILITY.unknown;
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono"
-      style={{ color, background: `${color}18`, border: `1px solid ${color}30` }}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        background: s.bg,
+        color: s.color,
+        border: `1px solid ${s.border}`,
+        fontFamily: "var(--font-mono)",
+        fontSize: "10px",
+        fontWeight: 600,
+        borderRadius: "4px",
+        padding: "3px 10px",
+      }}
     >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
-      {label}
+      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.color }} />
+      {s.label}
+    </span>
+  );
+}
+
+function Pill({ children, tone }: { children: React.ReactNode; tone: "warm" | "neutral" }) {
+  const style =
+    tone === "warm"
+      ? { bg: "#FFF4D6", color: "#8A5600", border: "#E8C96A" }
+      : { bg: "#FBF8F1", color: "#6F6A60", border: "#E8DFCF" };
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        margin: "4px",
+        background: style.bg,
+        color: style.color,
+        border: `1px solid ${style.border}`,
+        fontSize: "12px",
+        borderRadius: "6px",
+        padding: "5px 12px",
+      }}
+    >
+      {children}
     </span>
   );
 }
@@ -50,177 +92,170 @@ export default function ExtractedFieldsCard({ extracted }: Props) {
 
   return (
     <div
-      className="rounded-2xl border"
-      style={{ background: "#0f1018", borderColor: "#252838" }}
+      style={{
+        background: "#FFFDF8",
+        border: "1px solid #E8DFCF",
+        borderRadius: "14px",
+        overflow: "hidden",
+      }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-6 py-4 border-b"
-        style={{ borderColor: "#1a1d2a" }}
+        style={{
+          padding: "24px 28px",
+          borderBottom: "1px solid #E8DFCF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+        }}
       >
         <div>
-          <p
-            className="text-[11px] uppercase tracking-widest mb-0.5"
-            style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
-          >
-            Extracted Fields
-          </p>
-          <h3 className="text-sm font-medium" style={{ color: "#e4e6f0" }}>
+          <p style={{ ...labelMicro, margin: 0 }}>EXTRACTED FIELDS</p>
+          <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#11100D", margin: "4px 0 0" }}>
             Requirement Analysis
           </h3>
         </div>
         <button
           onClick={() => setShowEvidence(!showEvidence)}
-          className="text-xs px-3 py-1.5 rounded-lg transition-colors"
+          className={showEvidence ? undefined : "ef-toggle"}
           style={{
-            color: showEvidence ? "#f5a623" : "#7a7f99",
-            background: showEvidence ? "rgba(245,166,35,0.1)" : "#161823",
-            border: `1px solid ${showEvidence ? "rgba(245,166,35,0.3)" : "#252838"}`,
-            fontFamily: "var(--font-mono)",
+            fontSize: "12px",
+            padding: "6px 14px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            color: showEvidence ? "#FFFDF8" : "#6F6A60",
+            background: showEvidence ? "#11100D" : "#FBF8F1",
+            border: `1px solid ${showEvidence ? "#11100D" : "#E8DFCF"}`,
           }}
         >
-          {showEvidence ? "Hide" : "Show"} Evidence
+          {showEvidence ? "Hide Evidence" : "Show Evidence"}
         </button>
       </div>
 
-      {/* Fields */}
-      <div className="divide-y" style={{ borderColor: "#1a1d2a" }}>
-        {fields.map(({ key, label, value }) => (
-          <div key={key} className="px-6 py-3 flex items-start justify-between gap-4">
-            <span
-              className="text-xs flex-shrink-0 w-40"
-              style={{ color: "#7a7f99", fontFamily: "var(--font-mono)" }}
+      {/* Body */}
+      <div style={{ padding: "24px 28px" }}>
+        {/* Field rows */}
+        <div>
+          {fields.map(({ key, label, value }) => (
+            <div
+              key={key}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                padding: "12px 0",
+                borderBottom: "1px solid #F3EFE6",
+              }}
             >
-              {label}
-            </span>
-            <div className="text-right">
-              {key === "international_eligibility" && value ? (
-                <EligibilityChip value={value} />
-              ) : value ? (
-                <span
-                  className="text-sm"
-                  style={{ color: "#e4e6f0", fontFamily: "var(--font-mono)" }}
-                >
-                  {value}
-                </span>
-              ) : (
-                <span
-                  className="text-xs italic"
-                  style={{ color: "#484d66" }}
-                >
-                  not detected
-                </span>
-              )}
+              <span style={{ fontSize: "12px", color: "#6F6A60", flexShrink: 0 }}>{label}</span>
+              <div style={{ textAlign: "right", maxWidth: "60%" }}>
+                {key === "international_eligibility" && value ? (
+                  <EligibilityChip value={value} />
+                ) : value ? (
+                  <span style={{ fontSize: "13px", fontWeight: 500, color: "#11100D" }}>{value}</span>
+                ) : (
+                  <span style={{ fontSize: "13px", fontWeight: 400, color: "#AAA398", fontStyle: "italic" }}>
+                    not detected
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Ambiguous phrases */}
+        {extracted.ambiguous_phrases.length > 0 && (
+          <div>
+            <p style={{ ...labelMicro, margin: "20px 0 10px" }}>AMBIGUOUS PHRASES</p>
+            <div style={{ margin: "-4px" }}>
+              {extracted.ambiguous_phrases.map((phrase) => (
+                <Pill key={phrase} tone="warm">
+                  &ldquo;{phrase}&rdquo;
+                </Pill>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        )}
 
-      {/* Ambiguous phrases */}
-      {extracted.ambiguous_phrases.length > 0 && (
-        <div className="px-6 py-4 border-t" style={{ borderColor: "#1a1d2a" }}>
-          <p
-            className="text-[11px] uppercase tracking-widest mb-3"
-            style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
-          >
-            Ambiguous Phrases
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {extracted.ambiguous_phrases.map((phrase) => (
-              <span
-                key={phrase}
-                className="text-xs px-2.5 py-1 rounded-lg"
-                style={{
-                  color: "#f5a623",
-                  background: "rgba(245,166,35,0.08)",
-                  border: "1px solid rgba(245,166,35,0.2)",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                &ldquo;{phrase}&rdquo;
-              </span>
-            ))}
+        {/* Required materials */}
+        {extracted.required_materials.length > 0 && (
+          <div>
+            <p style={{ ...labelMicro, margin: "20px 0 10px" }}>REQUIRED MATERIALS</p>
+            <div style={{ margin: "-4px" }}>
+              {extracted.required_materials.map((mat) => (
+                <Pill key={mat} tone="neutral">
+                  {mat}
+                </Pill>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Evidence panel */}
-      {showEvidence && extracted.evidence.length > 0 && (
-        <div
-          className="px-6 py-4 border-t"
-          style={{ borderColor: "#1a1d2a", background: "#080910" }}
-        >
-          <p
-            className="text-[11px] uppercase tracking-widest mb-3"
-            style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
-          >
-            Source Evidence
-          </p>
-          <div className="space-y-3">
-            {extracted.evidence.map((ev, i) => (
-              <div
-                key={i}
-                className="rounded-lg p-3"
-                style={{ background: "#0f1018", border: "1px solid #1e2130" }}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span
-                    className="text-[10px] uppercase tracking-wide"
-                    style={{ color: "#7a7f99", fontFamily: "var(--font-mono)" }}
-                  >
-                    {ev.field.replace(/_/g, " ")}
-                  </span>
-                  <span
-                    className="text-[10px]"
+        {/* Evidence */}
+        {showEvidence && extracted.evidence.length > 0 && (
+          <div>
+            <p style={{ ...labelMicro, margin: "20px 0 10px" }}>SOURCE EVIDENCE</p>
+            {extracted.evidence.map((ev, i) => {
+              const pct = Math.round(ev.confidence * 100);
+              return (
+                <div
+                  key={i}
+                  style={{
+                    background: "#FBF8F1",
+                    border: "1px solid #E8DFCF",
+                    borderRadius: "10px",
+                    padding: "14px 16px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                    <span style={{ ...labelMicro }}>{ev.field.replace(/_/g, " ")}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "#6F6A60" }}>
+                        {pct}%
+                      </span>
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "3px",
+                          background: "#E8DFCF",
+                          borderRadius: "2px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div style={{ width: `${pct}%`, height: "100%", background: "#F5A91D", borderRadius: "2px" }} />
+                      </div>
+                    </div>
+                  </div>
+                  <p
                     style={{
-                      color:
-                        ev.confidence >= 0.95
-                          ? "#2ecc71"
-                          : ev.confidence >= 0.8
-                          ? "#f0c040"
-                          : "#7a7f99",
-                      fontFamily: "var(--font-mono)",
+                      fontSize: "12px",
+                      color: "#11100D",
+                      marginTop: "8px",
+                      lineHeight: 1.5,
+                      fontStyle: "italic",
+                      background: "#FFFDF8",
+                      borderLeft: "2px solid #F5A91D",
+                      paddingLeft: "10px",
                     }}
                   >
-                    {confidenceLabel(ev.confidence)} confidence ({Math.round(ev.confidence * 100)}%)
-                  </span>
+                    &ldquo;{ev.source_text}&rdquo;
+                  </p>
                 </div>
-                <p className="text-xs leading-relaxed" style={{ color: "#7a7f99" }}>
-                  &ldquo;{ev.source_text}&rdquo;
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Required materials */}
-      {extracted.required_materials.length > 0 && (
-        <div className="px-6 py-4 border-t" style={{ borderColor: "#1a1d2a" }}>
-          <p
-            className="text-[11px] uppercase tracking-widest mb-3"
-            style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
-          >
-            Required Materials
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {extracted.required_materials.map((mat) => (
-              <span
-                key={mat}
-                className="text-xs px-2.5 py-1 rounded-lg capitalize"
-                style={{
-                  color: "#7a7f99",
-                  background: "#161823",
-                  border: "1px solid #252838",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                {mat}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      <style jsx>{`
+        .ef-toggle:hover {
+          border-color: #d8c7a8 !important;
+        }
+      `}</style>
     </div>
   );
 }

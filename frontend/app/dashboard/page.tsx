@@ -177,31 +177,33 @@ function ScanCard({ scan }: { scan: SavedScan }) {
 /* ── Icons ─────────────────────────────────────────────────────── */
 
 const RadarIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <path d="M4 12a8 8 0 0 1 8-8" />
-    <path d="M7 12a5 5 0 0 1 5-5" />
-    <path d="M10 12a2 2 0 0 1 2-2" />
-    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="12" cy="12" r="3" fill="#11100D" stroke="none" />
+    <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.4" />
   </svg>
 );
 
 const SearchIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <circle cx="11" cy="11" r="7" />
-    <path d="M21 21l-4.3-4.3" />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <rect x="4" y="3" width="13" height="17" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <line x1="7" y1="8" x2="14" y2="8" stroke="currentColor" strokeWidth="1.5" />
+    <line x1="7" y1="12" x2="11" y2="12" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="16" cy="16" r="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 const PersonIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 20c0-4 4-7 8-7s8 3 8 7" />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M4 21v-1a8 8 0 0 1 16 0v1" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 const CalendarIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8 2v3M16 2v3M3 8h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M8 12l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
   </svg>
 );
 
@@ -315,7 +317,6 @@ export default function DashboardPage() {
   const dueWithin30 = upcoming.filter((d) => d.days <= 30);
 
   const displayName = firstName.trim() || nameFromEmail(user.email);
-  const mostRecentScanId = scans[0]?.id;
 
   const VISA_SHORT: Record<string, string> = {
     "F-1": "F-1",
@@ -403,87 +404,48 @@ export default function DashboardPage() {
         <section className="db-block">
           <SectionLabel>QUICK ACTIONS</SectionLabel>
           <div className="db-actions">
-            <Link
-              href="/radar"
-              className="db-action-card"
-              style={{ background: "#E6F7ED", borderColor: "#A8DFC0" }}
-            >
-              <span className="db-action-icon" style={{ background: "#1D9A57", color: "#FFFFFF" }}>
-                {RadarIcon}
-              </span>
-              <p className="db-action-title" style={{ color: "#11100D" }}>
-                Radar
-              </p>
-              <p className="db-action-desc" style={{ color: "#3A6B52" }}>
+            <Link href="/radar" className="db-action-card">
+              <span className="db-action-icon">{RadarIcon}</span>
+              <p className="db-action-title">Radar</p>
+              <p className="db-action-desc">
                 Browse internships, fellowships, and research programs discovered
                 by VisaLens.
               </p>
-              <p className="db-action-cta" style={{ color: "#1D9A57" }}>
-                Open Radar →
-              </p>
+              <p className="db-action-cta">Open Radar →</p>
             </Link>
 
-            <Link
-              href="/scan"
-              className="db-action-card"
-              style={{ background: "#FFF4D6", borderColor: "#E8C96A" }}
-            >
-              <span className="db-action-icon" style={{ background: "#F5A91D", color: "#FFFFFF" }}>
-                {SearchIcon}
-              </span>
-              <p className="db-action-title" style={{ color: "#11100D" }}>
-                Manual Analysis
-              </p>
-              <p className="db-action-desc" style={{ color: "#6B5020" }}>
+            <Link href="/scan" className="db-action-card">
+              <span className="db-action-icon">{SearchIcon}</span>
+              <p className="db-action-title">Manual Analysis</p>
+              <p className="db-action-desc">
                 Paste any opportunity description to get a full eligibility risk
                 report.
               </p>
-              <p className="db-action-cta" style={{ color: "#8A5600" }}>
-                Analyze Now →
-              </p>
+              <p className="db-action-cta">Analyze Now →</p>
             </Link>
 
             <button
               type="button"
               onClick={openProfile}
               className="db-action-card"
-              style={{ background: "#FFFDF8", borderColor: "#E8DFCF" }}
             >
-              <span className="db-action-icon" style={{ background: "#11100D", color: "#FFFFFF" }}>
-                {PersonIcon}
-              </span>
-              <p className="db-action-title" style={{ color: "#11100D" }}>
-                Your Profile
-              </p>
-              <p className="db-action-desc" style={{ color: "#6F6A60" }}>
+              <span className="db-action-icon">{PersonIcon}</span>
+              <p className="db-action-title">Your Profile</p>
+              <p className="db-action-desc">
                 Update your visa status, school, and level to personalize your
                 risk scoring.
               </p>
-              <p className="db-action-cta" style={{ color: "#6F6A60" }}>
-                Edit Profile →
-              </p>
+              <p className="db-action-cta">Edit Profile →</p>
             </button>
 
-            <Link
-              href={
-                mostRecentScanId ? `/results?scan=${mostRecentScanId}` : "/results"
-              }
-              className="db-action-card"
-              style={{ background: "#EEF4FF", borderColor: "#BFDBFE" }}
-            >
-              <span className="db-action-icon" style={{ background: "#2563EB", color: "#FFFFFF" }}>
-                {CalendarIcon}
-              </span>
-              <p className="db-action-title" style={{ color: "#11100D" }}>
-                Verification Timeline
-              </p>
-              <p className="db-action-desc" style={{ color: "#3A5080" }}>
-                View your step-by-step checklist and track progress on active
+            <Link href="/results" className="db-action-card">
+              <span className="db-action-icon">{CalendarIcon}</span>
+              <p className="db-action-title">Verification Timeline</p>
+              <p className="db-action-desc">
+                Track your step-by-step checklist progress on active
                 applications.
               </p>
-              <p className="db-action-cta" style={{ color: "#2563EB" }}>
-                View Timeline →
-              </p>
+              <p className="db-action-cta">View Timeline →</p>
             </Link>
           </div>
         </section>
@@ -923,33 +885,41 @@ export default function DashboardPage() {
           transition: all 0.2s ease;
         }
         .db-action-card:hover {
-          box-shadow: 0 6px 24px rgba(17, 16, 13, 0.08);
-          transform: translateY(-2px);
+          border-color: #d8c7a8;
+          box-shadow: 0 4px 20px rgba(17, 16, 13, 0.06);
+          transform: translateY(-1px);
         }
         .db-action-icon {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 40px;
-          height: 40px;
+          width: 36px;
+          height: 36px;
           border-radius: 8px;
+          border: 1px solid #e8dfcf;
+          background: #fbf8f1;
+          color: #6f6a60;
         }
         .db-action-title {
-          margin: 16px 0 0;
+          margin: 20px 0 0;
+          font-family: var(--font-sans);
           font-size: 15px;
           font-weight: 600;
           color: #11100d;
         }
         .db-action-desc {
-          margin: 4px 0 0;
+          margin: 6px 0 0;
           font-size: 13px;
-          line-height: 1.5;
+          line-height: 1.55;
           color: #6f6a60;
         }
         .db-action-cta {
-          margin: 16px 0 0;
+          margin: 20px 0 0;
           font-family: var(--font-mono);
           font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: #aaa398;
         }
 
         /* ── Empty state ─────────────────────────────────────── */

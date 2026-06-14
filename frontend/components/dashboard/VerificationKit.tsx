@@ -5,6 +5,14 @@ import type { VisaLensAnalysis } from "@/types/analysis";
 
 type Props = { verification: VisaLensAnalysis["verification"] };
 
+const labelMicro: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "10px",
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  color: "#AAA398",
+};
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
@@ -15,12 +23,16 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={copy}
-      className="text-xs px-3 py-1.5 rounded-lg transition-all"
+      className={copied ? undefined : "vk-copy"}
       style={{
-        color: copied ? "#2ecc71" : "#7a7f99",
-        background: copied ? "rgba(46,204,113,0.1)" : "#161823",
-        border: `1px solid ${copied ? "rgba(46,204,113,0.3)" : "#252838"}`,
-        fontFamily: "var(--font-mono)",
+        marginTop: "16px",
+        fontSize: "13px",
+        padding: "8px 20px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        color: copied ? "#1D9A57" : "#6F6A60",
+        background: copied ? "#E6F7ED" : "#FFFDF8",
+        border: `1px solid ${copied ? "#A8DFC0" : "#E8DFCF"}`,
       }}
     >
       {copied ? "Copied!" : "Copy"}
@@ -30,8 +42,54 @@ function CopyButton({ text }: { text: string }) {
 
 type Tab = "organizer" | "advisor" | "email" | "checklist";
 
+/* Split a raw email draft into subject + body when a "Subject:" line leads. */
+function parseEmail(raw: string): { subject: string; body: string } {
+  const match = raw.match(/^\s*subject:\s*(.+)\n([\s\S]*)$/i);
+  if (match) return { subject: match[1].trim(), body: match[2].trim() };
+  return { subject: "", body: raw.trim() };
+}
+
+function NumberedList({ items }: { items: string[] }) {
+  return (
+    <div>
+      {items.map((q, i) => (
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            gap: "12px",
+            padding: "12px 0",
+            borderBottom: "1px solid #F3EFE6",
+          }}
+        >
+          <span
+            style={{
+              flexShrink: 0,
+              width: "22px",
+              height: "22px",
+              borderRadius: "50%",
+              background: "#F5A91D",
+              color: "#11100D",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {i + 1}
+          </span>
+          <p style={{ fontSize: "13px", color: "#11100D", margin: 0, lineHeight: 1.5 }}>{q}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function VerificationKit({ verification }: Props) {
   const [tab, setTab] = useState<Tab>("organizer");
+  const [hover, setHover] = useState<Tab | null>(null);
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "organizer", label: "Ask Organizer" },
@@ -40,150 +98,164 @@ export default function VerificationKit({ verification }: Props) {
     { id: "checklist", label: "Next Steps" },
   ];
 
+  const email = parseEmail(verification.email_draft);
+
   return (
     <div
-      className="rounded-2xl border overflow-hidden"
-      style={{ background: "#0f1018", borderColor: "#252838" }}
+      style={{
+        background: "#FFFDF8",
+        border: "1px solid #E8DFCF",
+        borderRadius: "14px",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
     >
       {/* Header */}
-      <div className="px-6 py-4 border-b" style={{ borderColor: "#1a1d2a" }}>
-        <p
-          className="text-[11px] uppercase tracking-widest mb-0.5"
-          style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
-        >
-          Verification Kit
-        </p>
-        <h3 className="text-sm font-medium" style={{ color: "#e4e6f0" }}>
+      <div style={{ padding: "24px 28px", borderBottom: "1px solid #E8DFCF" }}>
+        <p style={{ ...labelMicro, margin: 0 }}>VERIFICATION KIT</p>
+        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#11100D", margin: "4px 0 0" }}>
           Exactly what to do next
         </h3>
       </div>
 
       {/* Tabs */}
       <div
-        className="flex border-b overflow-x-auto"
-        style={{ borderColor: "#1a1d2a" }}
+        style={{
+          padding: "0 28px",
+          borderBottom: "1px solid #E8DFCF",
+          display: "flex",
+          overflowX: "auto",
+        }}
       >
-        {tabs.map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className="px-5 py-3 text-xs whitespace-nowrap transition-colors flex-shrink-0"
-            style={{
-              color: tab === id ? "#f5a623" : "#7a7f99",
-              borderBottom: tab === id ? "2px solid #f5a623" : "2px solid transparent",
-              background: "transparent",
-              fontFamily: "var(--font-mono)",
-              fontWeight: tab === id ? "500" : "400",
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        {tabs.map(({ id, label }) => {
+          const active = tab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              onMouseEnter={() => setHover(id)}
+              onMouseLeave={() => setHover(null)}
+              style={{
+                padding: "14px 20px",
+                fontSize: "13px",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                background: "transparent",
+                border: "none",
+                borderBottom: `2px solid ${active ? "#F5A91D" : "transparent"}`,
+                marginBottom: "-1px",
+                transition: "color 0.15s, border-color 0.15s",
+                fontWeight: active ? 600 : 400,
+                color: active ? "#11100D" : hover === id ? "#6F6A60" : "#AAA398",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
-      <div className="p-6">
+      <div style={{ padding: "24px 28px", flex: 1 }}>
         {tab === "organizer" && (
           <div>
-            <p className="text-xs mb-4" style={{ color: "#7a7f99" }}>
+            <p style={{ fontSize: "13px", color: "#6F6A60", marginBottom: "20px", lineHeight: 1.55 }}>
               Send these questions directly to the opportunity organizer or program coordinator.
             </p>
-            <ol className="space-y-3">
-              {verification.organizer_questions.map((q, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono mt-0.5"
-                    style={{ background: "rgba(245,166,35,0.12)", color: "#f5a623", border: "1px solid rgba(245,166,35,0.25)" }}
-                  >
-                    {i + 1}
-                  </span>
-                  <p className="text-sm leading-relaxed" style={{ color: "#e4e6f0" }}>
-                    {q}
-                  </p>
-                </li>
-              ))}
-            </ol>
+            <NumberedList items={verification.organizer_questions} />
           </div>
         )}
 
         {tab === "advisor" && (
           <div>
-            <p className="text-xs mb-4" style={{ color: "#7a7f99" }}>
+            <p style={{ fontSize: "13px", color: "#6F6A60", marginBottom: "20px", lineHeight: 1.55 }}>
               Bring these to your school&apos;s international student office or DSO/advisor.
             </p>
-            <ol className="space-y-3">
-              {verification.advisor_questions.map((q, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span
-                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono mt-0.5"
-                    style={{ background: "rgba(46,204,113,0.10)", color: "#2ecc71", border: "1px solid rgba(46,204,113,0.22)" }}
-                  >
-                    {i + 1}
-                  </span>
-                  <p className="text-sm leading-relaxed" style={{ color: "#e4e6f0" }}>
-                    {q}
-                  </p>
-                </li>
-              ))}
-            </ol>
+            <NumberedList items={verification.advisor_questions} />
           </div>
         )}
 
         {tab === "email" && (
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs" style={{ color: "#7a7f99" }}>
-                Ready-to-send email for the organizer. Customize with your name.
-              </p>
-              <CopyButton text={verification.email_draft} />
-            </div>
             <div
-              className="rounded-xl p-4"
-              style={{ background: "#080910", border: "1px solid #1e2130" }}
+              style={{
+                background: "#FBF8F1",
+                border: "1px solid #E8DFCF",
+                borderRadius: "10px",
+                padding: "20px",
+              }}
             >
-              <pre
-                className="text-sm leading-relaxed whitespace-pre-wrap"
-                style={{ color: "#e4e6f0", fontFamily: "var(--font-mono)", fontSize: "12px" }}
-              >
-                {verification.email_draft}
-              </pre>
+              {email.subject && (
+                <>
+                  <p style={{ ...labelMicro, margin: "0 0 6px" }}>SUBJECT</p>
+                  <p style={{ fontSize: "13px", fontWeight: 600, color: "#11100D", margin: "0 0 16px" }}>
+                    {email.subject}
+                  </p>
+                  <div style={{ borderTop: "1px solid #E8DFCF", marginBottom: "16px" }} />
+                </>
+              )}
+              <p style={{ fontSize: "13px", color: "#11100D", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>
+                {email.body}
+              </p>
             </div>
+            <CopyButton text={verification.email_draft} />
           </div>
         )}
 
         {tab === "checklist" && (
           <div>
-            <p className="text-xs mb-4" style={{ color: "#7a7f99" }}>
-              Complete these steps before applying or accepting.
-            </p>
-            <ol className="space-y-3">
-              {verification.next_steps.map((step, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span
-                    className="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono mt-0.5"
-                    style={{ background: "#161823", color: "#7a7f99", border: "1px solid #252838" }}
-                  >
-                    {i + 1}
-                  </span>
-                  <p className="text-sm leading-relaxed" style={{ color: "#e4e6f0" }}>
-                    {step}
-                  </p>
-                </li>
-              ))}
-            </ol>
+            {verification.next_steps.map((step, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  padding: "12px 0",
+                  borderBottom: "1px solid #F3EFE6",
+                }}
+              >
+                <span
+                  style={{
+                    flexShrink: 0,
+                    width: "20px",
+                    height: "20px",
+                    borderRadius: "50%",
+                    border: "2px solid #E8DFCF",
+                    background: "#FFFFFF",
+                    marginTop: "2px",
+                  }}
+                />
+                <p style={{ fontSize: "13px", color: "#11100D", margin: 0, lineHeight: 1.5 }}>{step}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
       {/* Disclaimer */}
-      <div
-        className="px-6 pb-5 border-t pt-4"
-        style={{ borderColor: "#1a1d2a", background: "#080910" }}
-      >
-        <p className="text-[10px] leading-relaxed" style={{ color: "#484d66" }}>
-          ⚖ {verification.disclaimer}
+      <div style={{ padding: "0 28px 24px" }}>
+        <p
+          style={{
+            marginTop: "24px",
+            paddingTop: "16px",
+            borderTop: "1px solid #E8DFCF",
+            fontSize: "11px",
+            color: "#AAA398",
+            lineHeight: 1.6,
+            fontStyle: "italic",
+          }}
+        >
+          {verification.disclaimer}
         </p>
       </div>
+
+      <style jsx>{`
+        .vk-copy:hover {
+          border-color: #d8c7a8 !important;
+        }
+      `}</style>
     </div>
   );
 }
