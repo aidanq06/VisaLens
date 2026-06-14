@@ -81,6 +81,8 @@ export default function ResultsContent() {
   const [isDemo, setIsDemo] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [checklist, setChecklist] = useState<boolean[]>([]);
+  const [activeTab, setActiveTab] = useState<"graph" | "timeline">("graph");
+  const [hoverTab, setHoverTab] = useState<"graph" | "timeline" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -479,16 +481,82 @@ export default function ResultsContent() {
         <ExtractedFieldsCard extracted={analysis.extracted} />
         <VerificationKit verification={analysis.verification} />
 
-        {/* Blocker graph + Timeline, side by side (kept in card shells) */}
-        <div style={CARD_SHELL}>
-          <BlockerGraph graph={analysis.graph} />
-        </div>
-        <div style={CARD_SHELL}>
-          <TimelineRiskCard
-            timeline={analysis.timeline}
-            checklistProgress={isDemo ? undefined : checklist}
-            onToggleStep={isDemo ? undefined : toggleStep}
-          />
+        {/* Blocker graph + Timeline, combined into one tabbed card */}
+        <div style={{ ...CARD_SHELL, gridColumn: "1 / -1" }}>
+          {/* Header */}
+          <div style={{ padding: "24px 28px", borderBottom: "1px solid #E8DFCF" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
+                color: "#AAA398",
+                margin: 0,
+              }}
+            >
+              VERIFICATION ANALYSIS
+            </p>
+            <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#11100D", margin: "4px 0 0" }}>
+              Blocker Graph &amp; Timeline
+            </h3>
+          </div>
+
+          {/* Tabs */}
+          <div
+            style={{
+              padding: "0 28px",
+              borderBottom: "1px solid #E8DFCF",
+              display: "flex",
+              overflowX: "auto",
+            }}
+          >
+            {(
+              [
+                { id: "graph", label: "Blocker Graph" },
+                { id: "timeline", label: "Deadline & Timeline" },
+              ] as const
+            ).map(({ id, label }) => {
+              const active = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  onMouseEnter={() => setHoverTab(id)}
+                  onMouseLeave={() => setHoverTab(null)}
+                  style={{
+                    padding: "14px 20px",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: `2px solid ${active ? "#F5A91D" : "transparent"}`,
+                    marginBottom: "-1px",
+                    transition: "color 0.15s, border-color 0.15s",
+                    fontWeight: active ? 600 : 400,
+                    color: active ? "#11100D" : hoverTab === id ? "#6F6A60" : "#AAA398",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab content */}
+          <div style={{ padding: "24px 28px" }}>
+            {activeTab === "graph" ? (
+              <BlockerGraph graph={analysis.graph} />
+            ) : (
+              <TimelineRiskCard
+                timeline={analysis.timeline}
+                checklistProgress={isDemo ? undefined : checklist}
+                onToggleStep={isDemo ? undefined : toggleStep}
+              />
+            )}
+          </div>
         </div>
       </div>
 

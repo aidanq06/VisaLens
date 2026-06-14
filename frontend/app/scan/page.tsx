@@ -47,24 +47,38 @@ function SelectGroup<T extends string>({
   return (
     <div>
       <p
-        className="text-xs mb-2 uppercase tracking-widest"
-        style={{ color: "#484d66", fontFamily: "var(--font-mono)" }}
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          color: "#AAA398",
+          marginBottom: "10px",
+        }}
       >
         {label}
       </p>
-      <div className="flex flex-wrap gap-2">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
         {options.map((opt) => {
           const active = opt.value === value;
           return (
             <button
               key={opt.value}
+              type="button"
               onClick={() => onChange(opt.value)}
-              className="px-3 py-2 rounded-lg text-xs transition-all"
+              className={active ? undefined : "scan-pill"}
               style={{
-                color: active ? "#f5a623" : "#7a7f99",
-                background: active ? "rgba(245,166,35,0.1)" : "#161823",
-                border: `1px solid ${active ? "rgba(245,166,35,0.35)" : "#252838"}`,
-                fontFamily: "var(--font-mono)",
+                padding: "8px 16px",
+                borderRadius: "8px",
+                fontSize: "13px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                fontFamily: "var(--font-sans)",
+                border: "1px solid",
+                background: active ? "#F5A91D" : "#FBF8F1",
+                color: active ? "#11100D" : "#6F6A60",
+                borderColor: active ? "#F5A91D" : "#E8DFCF",
+                fontWeight: active ? 600 : 400,
               }}
             >
               {opt.label}
@@ -75,6 +89,19 @@ function SelectGroup<T extends string>({
     </div>
   );
 }
+
+const cardStyle: React.CSSProperties = {
+  background: "#FFFDF8",
+  border: "1px solid #E8DFCF",
+  borderRadius: "14px",
+  padding: "28px",
+};
+
+const cardTitleStyle: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "#11100D",
+};
 
 export default function ScanPage() {
   const router = useRouter();
@@ -173,346 +200,354 @@ export default function ScanPage() {
     }
   }
 
+  const overMin = text.length > 30;
+
   return (
-    <div style={{ background: "#080910", minHeight: "100vh", color: "#e4e6f0" }}>
-      {/* Nav */}
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#FBF8F1",
+        backgroundImage: "radial-gradient(circle, #DDD5C4 1px, transparent 1px)",
+        backgroundSize: "32px 32px",
+        color: "#11100D",
+      }}
+    >
+      {/* ── Nav ───────────────────────────────────────────────── */}
       <nav
+        className="scan-nav"
         style={{
-          borderBottom: "1px solid #1a1d2a",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          height: "56px",
+          padding: "0 48px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "18px 32px",
+          gap: "16px",
+          background: "rgba(251,248,241,0.95)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: "1px solid #E8DFCF",
         }}
       >
         <Link
           href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            textDecoration: "none",
-          }}
+          style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}
         >
-          <span style={{ color: "#f5a623", fontSize: "16px" }}>◈</span>
+          <span style={{ color: "#F5A91D", fontSize: "18px", lineHeight: 1 }}>◈</span>
           <span
             style={{
-              fontWeight: "500",
-              fontSize: "14px",
-              color: "#e4e6f0",
+              fontFamily: "var(--font-mono)",
+              fontSize: "13px",
+              fontWeight: 700,
+              letterSpacing: "0.16em",
+              color: "#11100D",
             }}
           >
-            VisaLens
+            VISALENS
           </span>
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span
-            style={{
-              fontSize: "12px",
-              color: "#484d66",
-              fontFamily: "var(--font-mono)",
-            }}
-          >
-            Analyze Opportunity
-          </span>
-          <ProfileMenu />
-        </div>
+        <span
+          className="scan-nav-center"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "11px",
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            color: "#AAA398",
+          }}
+        >
+          ANALYZE OPPORTUNITY
+        </span>
+        <ProfileMenu />
       </nav>
 
-      <div
-        style={{ maxWidth: "720px", margin: "0 auto", padding: "48px 24px 80px" }}
-      >
-        {/* Heading */}
-        <div style={{ marginBottom: "40px" }}>
-          <p
-            style={{
-              fontSize: "11px",
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-              color: "#484d66",
-              fontFamily: "var(--font-mono)",
-              marginBottom: "8px",
-            }}
-          >
-            Step 1 of 1
-          </p>
-          <h1
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: "36px",
-              lineHeight: "1.1",
-              color: "#e4e6f0",
-              marginBottom: "8px",
-            }}
-          >
-            Analyze your opportunity
-          </h1>
-          <p style={{ fontSize: "14px", color: "#7a7f99" }}>
-            Paste any opportunity description to get a full eligibility risk report.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {/* Student context */}
-          <div
-            style={{
-              background: "#0f1018",
-              border: "1px solid #252838",
-              borderRadius: "16px",
-              padding: "24px",
-              marginBottom: "16px",
-            }}
-          >
+      {/* ── Main ──────────────────────────────────────────────── */}
+      <div style={{ paddingTop: "56px" }}>
+        <div style={{ maxWidth: "720px", margin: "0 auto", padding: "48px 24px 80px" }}>
+          {/* Page header */}
+          <div style={{ marginBottom: "40px" }}>
             <p
               style={{
-                fontSize: "13px",
-                fontWeight: "500",
-                color: "#e4e6f0",
-                marginBottom: "20px",
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
+                color: "#AAA398",
+                marginBottom: "8px",
               }}
             >
-              Your student context
+              ELIGIBILITY ANALYSIS
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <SelectGroup
-                label="Visa / status"
-                options={STATUS_OPTIONS}
-                value={status}
-                onChange={setStatus}
-              />
-              <SelectGroup
-                label="School level"
-                options={LEVEL_OPTIONS}
-                value={schoolLevel}
-                onChange={setSchoolLevel}
-              />
-              <SelectGroup
-                label="Opportunity type"
-                options={TYPE_OPTIONS}
-                value={oppType}
-                onChange={setOppType}
-              />
-            </div>
+            <h1
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: "36px",
+                fontWeight: 500,
+                lineHeight: 1.1,
+                color: "#11100D",
+                margin: 0,
+              }}
+            >
+              Analyze your opportunity.
+            </h1>
+            <p style={{ fontSize: "14px", color: "#6F6A60", marginTop: "8px", lineHeight: 1.55 }}>
+              Paste any opportunity description to get a full eligibility risk report.
+            </p>
           </div>
 
-          {/* Opportunity input */}
-          <div
-            style={{
-              background: "#0f1018",
-              border: "1px solid #252838",
-              borderRadius: "16px",
-              padding: "24px",
-              marginBottom: "16px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "20px",
-              }}
-            >
-              <p
-                style={{ fontSize: "13px", fontWeight: "500", color: "#e4e6f0" }}
-              >
-                Opportunity description
-              </p>
-              {/* Quick load samples */}
-              <div style={{ display: "flex", gap: "6px" }}>
-                {sampleOpportunities.map((opp) => (
-                  <button
-                    key={opp.id}
-                    type="button"
-                    onClick={() => loadSample(opp.id)}
-                    style={{
-                      fontSize: "10px",
-                      padding: "4px 8px",
-                      borderRadius: "6px",
-                      color: "#7a7f99",
-                      background: "#161823",
-                      border: "1px solid #252838",
-                      fontFamily: "var(--font-mono)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {opp.category}
-                  </button>
-                ))}
+          <form onSubmit={handleSubmit}>
+            {/* Section 1 — student context */}
+            <div style={{ ...cardStyle, marginBottom: "16px" }}>
+              <p style={{ ...cardTitleStyle, marginBottom: "20px" }}>Your student context</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <SelectGroup
+                  label="Visa / Status"
+                  options={STATUS_OPTIONS}
+                  value={status}
+                  onChange={setStatus}
+                />
+                <SelectGroup
+                  label="School Level"
+                  options={LEVEL_OPTIONS}
+                  value={schoolLevel}
+                  onChange={setSchoolLevel}
+                />
+                <SelectGroup
+                  label="Opportunity Type"
+                  options={TYPE_OPTIONS}
+                  value={oppType}
+                  onChange={setOppType}
+                />
               </div>
             </div>
 
-            {/* Title */}
-            <div style={{ marginBottom: "12px" }}>
+            {/* Section 2 — opportunity description */}
+            <div style={{ ...cardStyle, marginBottom: "16px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  marginBottom: "20px",
+                }}
+              >
+                <p style={cardTitleStyle}>Opportunity description</p>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  {sampleOpportunities.map((opp) => (
+                    <button
+                      key={opp.id}
+                      type="button"
+                      onClick={() => loadSample(opp.id)}
+                      className="scan-chip"
+                      style={{
+                        fontSize: "11px",
+                        padding: "4px 10px",
+                        borderRadius: "6px",
+                        background: "#FBF8F1",
+                        border: "1px solid #E8DFCF",
+                        color: "#6F6A60",
+                        fontFamily: "var(--font-mono)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {opp.category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title */}
               <input
                 type="text"
                 placeholder="Opportunity title (optional)"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                className="scan-input"
                 style={{
                   width: "100%",
-                  background: "#080910",
-                  border: "1px solid #252838",
-                  borderRadius: "10px",
+                  background: "#FBF8F1",
+                  border: "1px solid #E8DFCF",
+                  borderRadius: "8px",
+                  padding: "11px 14px",
+                  fontSize: "13px",
+                  color: "#11100D",
+                  outline: "none",
+                  fontFamily: "var(--font-sans)",
+                  marginBottom: "12px",
+                  transition: "border-color 0.15s ease",
+                }}
+              />
+
+              {/* Text area */}
+              <textarea
+                placeholder="Paste the full opportunity description here...&#10;&#10;Example: &quot;Paid summer AI internship for undergraduate students enrolled at U.S. universities. Applicants must be eligible to work in the United States...&quot;"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={10}
+                className="scan-textarea"
+                style={{
+                  width: "100%",
+                  background: "#FBF8F1",
+                  border: `1px solid ${overMin ? "#F5A91D" : "#E8DFCF"}`,
+                  borderRadius: "8px",
+                  padding: "12px 14px",
+                  fontSize: "13px",
+                  color: "#11100D",
+                  outline: "none",
+                  resize: "vertical",
+                  minHeight: "200px",
+                  lineHeight: 1.6,
+                  fontFamily: "var(--font-mono)",
+                  transition: "border-color 0.15s ease",
+                }}
+              />
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "11px",
+                  color: overMin ? "#1D9A57" : "#AAA398",
+                  marginTop: "6px",
+                }}
+              >
+                {text.length} chars · minimum 30
+              </p>
+            </div>
+
+            {/* Section 3 — deadline */}
+            <div style={{ ...cardStyle, marginBottom: "24px" }}>
+              <p style={cardTitleStyle}>
+                Deadline or start date
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    color: "#AAA398",
+                    marginLeft: "8px",
+                  }}
+                >
+                  optional
+                </span>
+              </p>
+              <p style={{ fontSize: "12px", color: "#6F6A60", marginTop: "4px", marginBottom: "16px" }}>
+                Used to simulate verification timeline urgency.
+              </p>
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="scan-date"
+                style={{
+                  background: "#FBF8F1",
+                  border: "1px solid #E8DFCF",
+                  borderRadius: "8px",
                   padding: "10px 14px",
                   fontSize: "13px",
-                  color: "#e4e6f0",
+                  color: "#11100D",
                   outline: "none",
+                  fontFamily: "var(--font-mono)",
+                  colorScheme: "light",
+                  transition: "border-color 0.15s ease",
                 }}
               />
             </div>
 
-            {/* Text area */}
-            <textarea
-              placeholder="Paste the full opportunity description here...&#10;&#10;Example: &quot;Paid summer AI internship for undergraduate students enrolled at U.S. universities. Applicants must be eligible to work in the United States...&quot;"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              rows={10}
+            {/* Error */}
+            {error && (
+              <div
+                style={{
+                  marginBottom: "16px",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  background: "#FFE8E8",
+                  border: "1px solid #F5C0C0",
+                }}
+              >
+                <p style={{ fontSize: "13px", color: "#D83A3A", margin: 0 }}>{error}</p>
+                <Link
+                  href="/results?demo=true"
+                  style={{
+                    display: "inline-block",
+                    marginTop: "8px",
+                    fontSize: "13px",
+                    color: "#8A5600",
+                    fontFamily: "var(--font-mono)",
+                    textDecoration: "underline",
+                  }}
+                >
+                  View demo results →
+                </Link>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={!canSubmit || loading}
+              className="scan-submit"
               style={{
                 width: "100%",
-                background: "#080910",
-                border: `1px solid ${text.length > 30 ? "rgba(245,166,35,0.3)" : "#252838"}`,
-                borderRadius: "10px",
-                padding: "12px 14px",
-                fontSize: "13px",
-                color: "#e4e6f0",
-                outline: "none",
-                resize: "vertical",
-                lineHeight: "1.6",
-                fontFamily: "var(--font-mono)",
-              }}
-            />
-            <p
-              style={{
-                fontSize: "11px",
-                color: "#484d66",
-                marginTop: "6px",
-                fontFamily: "var(--font-mono)",
+                padding: "15px",
+                borderRadius: "8px",
+                fontSize: "15px",
+                fontWeight: 700,
+                border: "none",
+                transition: "all 0.2s ease",
+                background: canSubmit && !loading ? "#F5A91D" : "#E8DFCF",
+                color: canSubmit && !loading ? "#11100D" : "#AAA398",
+                cursor: canSubmit && !loading ? "pointer" : "not-allowed",
               }}
             >
-              {text.length} chars — minimum 30
-            </p>
-          </div>
+              {loading ? "Analyzing..." : "Analyze Eligibility Risk →"}
+            </button>
 
-          {/* Timeline (optional) */}
-          <div
-            style={{
-              background: "#0f1018",
-              border: "1px solid #252838",
-              borderRadius: "16px",
-              padding: "24px",
-              marginBottom: "24px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "13px",
-                fontWeight: "500",
-                color: "#e4e6f0",
-                marginBottom: "4px",
-              }}
-            >
-              Deadline or start date
-              <span
-                style={{
-                  fontSize: "11px",
-                  color: "#484d66",
-                  marginLeft: "8px",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                optional
-              </span>
-            </p>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "#7a7f99",
-                marginBottom: "14px",
-              }}
-            >
-              Used to simulate verification timeline urgency.
-            </p>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              style={{
-                background: "#080910",
-                border: "1px solid #252838",
-                borderRadius: "10px",
-                padding: "10px 14px",
-                fontSize: "13px",
-                color: "#e4e6f0",
-                outline: "none",
-                fontFamily: "var(--font-mono)",
-                colorScheme: "dark",
-              }}
-            />
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={!canSubmit || loading}
-            style={{
-              width: "100%",
-              padding: "16px",
-              borderRadius: "12px",
-              fontSize: "15px",
-              fontWeight: "600",
-              background: canSubmit && !loading ? "#f5a623" : "#1e2130",
-              color: canSubmit && !loading ? "#080910" : "#484d66",
-              border: "none",
-              cursor: canSubmit && !loading ? "pointer" : "not-allowed",
-              transition: "all 0.2s",
-            }}
-          >
-            {loading ? "Analyzing…" : "Analyze Eligibility Risk →"}
-          </button>
-
-          {loading && (
-            <div style={{ marginTop: "16px", textAlign: "center" }}>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "#7a7f99",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                Extracting requirements · Scoring risk · Building blocker graph…
-              </p>
-            </div>
-          )}
-
-          {error && (
-            <div
-              style={{
-                marginTop: "16px",
-                padding: "14px 16px",
-                borderRadius: "12px",
-                background: "rgba(239,67,67,0.06)",
-                border: "1px solid rgba(239,67,67,0.25)",
-              }}
-            >
-              <p style={{ fontSize: "12px", color: "#ef9a9a", marginBottom: "8px" }}>
-                {error}
-              </p>
-              <Link
-                href="/results?demo=true"
-                style={{
-                  fontSize: "12px",
-                  color: "#f5a623",
-                  fontFamily: "var(--font-mono)",
-                  textDecoration: "underline",
-                }}
-              >
-                View demo results →
-              </Link>
-            </div>
-          )}
-        </form>
+            {loading && (
+              <div style={{ marginTop: "16px", textAlign: "center" }}>
+                <p style={{ fontSize: "12px", color: "#6F6A60", fontFamily: "var(--font-mono)" }}>
+                  Extracting requirements · Scoring risk · Building blocker graph...
+                </p>
+              </div>
+            )}
+          </form>
+        </div>
       </div>
+
+      <style jsx>{`
+        .scan-pill:hover {
+          border-color: #d8c7a8 !important;
+          color: #11100d !important;
+        }
+        .scan-chip:hover {
+          border-color: #d8c7a8 !important;
+        }
+        .scan-submit:not(:disabled):hover {
+          background: #d4890f !important;
+        }
+        @media (max-width: 600px) {
+          .scan-nav {
+            padding: 0 24px !important;
+          }
+          .scan-nav-center {
+            display: none;
+          }
+        }
+      `}</style>
+
+      <style jsx global>{`
+        .scan-input::placeholder,
+        .scan-textarea::placeholder {
+          color: #aaa398;
+        }
+        .scan-input:focus,
+        .scan-date:focus {
+          border-color: #f5a91d;
+          box-shadow: 0 0 0 3px rgba(245, 169, 29, 0.1);
+        }
+      `}</style>
     </div>
   );
 }
